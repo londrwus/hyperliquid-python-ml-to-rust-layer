@@ -70,12 +70,21 @@ pub const ONNX_EPS: f32 = 1e-5;
 /// against it here, so a regeneration that quietly fell back to [`ONNX_EPS`]
 /// reddens instead of passing with a hundredfold of slack restored.
 ///
-/// It is not [`ONNX_EPS`] because every graph gated here sits four to five orders
-/// of magnitude inside that ceiling — `lgbm_binary` 1.1920929e-7 (one ULP at 1.0,
-/// exactly), `zoo_logistic` 8.940697e-8, `mlp_regressor` 0e0 — and the slack is
-/// where a regression passes green. That is the same argument [`ONNX_EPS`]'s own
-/// pinning of `tract` makes: a silent patch bump could move a result inside the
-/// tolerance with no code change to blame it on.
+/// It is not [`ONNX_EPS`] because the *probability* graphs gated here sit four to
+/// five orders of magnitude inside that ceiling — `lgbm_binary` 1.1920929e-7 (one
+/// ULP at 1.0, exactly), `zoo_logistic` 8.940697e-8 — and the slack is where a
+/// regression passes green. That is the same argument [`ONNX_EPS`]'s own pinning of
+/// `tract` makes: a silent patch bump could move a result inside the tolerance with
+/// no code change to blame it on.
+///
+/// **It is an absolute bound, so read it against the scores it will meet.** "Two ULP
+/// at 1.0" is four ULP on a probability in [0, 1] and one ULP on a score of 3.8.
+/// `mlp_regressor` is the bundle where that bites: its scores reach 3.832491, where
+/// this constant *is* one ULP, so declaring it there asks a neural net for bit
+/// equality on a runtime that reassociates matmuls. It briefly did, on the strength
+/// of one machine measuring `0e0`; a runner whose `tract` chose a different kernel
+/// measured two ULP and the gate reddened with nothing wrong. That bundle is held to
+/// [`ONNX_EPS`], which is ADR-0003's tolerance for exactly this family.
 pub const ONNX_TIGHT_EPS: f32 = 2.384_185_8e-7;
 
 /// How many divergent rows a report keeps. A systematically broken candidate

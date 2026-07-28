@@ -6,7 +6,7 @@
   },
   "bundle_schema": 1,
   "criterion": {
-    "eps": 2.384185791015625e-07,
+    "eps": 1e-05,
     "kind": "max_abs_diff"
   },
   "decision": {

@@ -114,9 +114,21 @@ fn tree_bundles_are_gated_at_bit_equality_and_graphs_at_the_documented_tolerance
     // declining to test its own claim).
     assert_eq!(bundle("tree_identity").criterion(), Criterion::BitExact);
     assert_eq!(bundle("tree_logistic").criterion(), Criterion::BitExact);
+    // The neural net is the one graph held to the family ceiling rather than to
+    // `ONNX_TIGHT_EPS`, and the reason is arithmetic rather than indulgence.
+    // `ONNX_TIGHT_EPS` is an *absolute* bound documented as "two ULP at 1.0", so what it
+    // demands depends on the scores it is applied to. The probability graphs sit in
+    // [0, 1], where it is four ULP. This bundle's scores reach 3.83, where one ULP is
+    // 2.3841858e-7 — the constant exactly — so on this corpus the "tolerance" is a
+    // demand for bit equality, which is the promotion ADR-0021 explicitly refused to
+    // make for `mlp_regressor` ("exact agreement on one machine is luck rather than a
+    // property"). It was tightened here anyway because this machine measured 0e0; a
+    // runner whose `tract` picks a different matmul kernel measures two ULP and reddens
+    // with nothing wrong. Neural nets are not bit-exact across runtimes, which is why
+    // ADR-0003 gives graphs 1e-5 and `onnx.rs` says this backend is held to it.
     assert_eq!(
         bundle("mlp_regressor").criterion(),
-        Criterion::MaxAbsDiff(ONNX_TIGHT_EPS)
+        Criterion::MaxAbsDiff(ONNX_EPS)
     );
 }
 
@@ -279,13 +291,24 @@ fn the_onnx_half_of_the_unassisted_version_stamp_is_gated_too() {
     assert_eq!(report.non_finite(), 0, "{}", report.summary());
     assert!(report.passed(), "{}", report.summary());
 
-    // Measured on this bundle, not inherited from anyone else's holdout. Pinned
-    // exactly for the reason ADR-0019 §1 pins `tract-onnx` exactly: a patch bump
-    // could move a result inside the tolerance with no code change to blame.
-    assert_eq!(
-        report.max_abs_diff().to_bits(),
-        8.940697e-8f32.to_bits(),
-        "max_abs_diff moved to {:e}; {}",
+    // Measured on this bundle, not inherited from anyone else's holdout — but asserted
+    // as a ceiling rather than as an equality, because the figure is a property of the
+    // host as well as of the code. `tract` selects its sigmoid and matmul kernels from
+    // the CPU it finds (a 16-wide kernel on an AVX-512 host, an 8-wide one elsewhere),
+    // so this number moves between machines with nothing to blame it on: pinned exactly,
+    // it reddened on a CI runner that agreed *better* than this one — 5.9604645e-8
+    // against the 8.940697e-8 below, with the report itself saying PASS. A gate that
+    // fails because the answer improved is measuring the hardware. Catching the patch
+    // bump ADR-0019 §1 worries about is the job of the exact `tract-onnx` version pin;
+    // what belongs here is the direction that means trouble.
+    // The bound is the declared criterion and not the observed figure, because the
+    // observed figure is not a single number: `tract` has three kernel families to pick
+    // from here (generic, 8-wide FMA, 16-wide AVX-512) and this bundle has already shown
+    // 8.940697e-8 on one host and 5.9604645e-8 on another. Bounding at either would just
+    // move which CPU reddens the gate.
+    assert!(
+        report.max_abs_diff() <= ONNX_TIGHT_EPS,
+        "max_abs_diff rose to {:e}; {}",
         report.max_abs_diff(),
         report.summary()
     );
@@ -323,10 +346,12 @@ fn a_tract_upgrade_that_moved_lightgbms_numbers_would_redden_this_gate() {
     // probability in [0, 1] can show. If this moves, the cause is a `tract`
     // version change or a regenerated bundle, and both are events someone must
     // look at rather than absorb.
-    assert_eq!(
-        report.max_abs_diff().to_bits(),
-        1.1920929e-7f32.to_bits(),
-        "max_abs_diff moved to {:e}; {}",
+    // A ceiling, not an equality, for the reason spelled out on `zoo_logistic` above: the
+    // exact figure follows the host's SIMD kernels, and this same runner produced
+    // 5.9604645e-8 — better agreement, and a red gate.
+    assert!(
+        report.max_abs_diff() <= ONNX_TIGHT_EPS,
+        "max_abs_diff rose to {:e}; {}",
         report.max_abs_diff(),
         report.summary()
     );
@@ -381,7 +406,12 @@ fn a_committed_graph_bundle_declares_two_ulp_and_the_ceiling_still_only_refuses_
             "the declared criterion must be tighter than the family ceiling"
         )
     };
-    for name in ["lgbm_binary", "mlp_regressor", "zoo_logistic"] {
+    // The probability graphs. `mlp_regressor` is not among them: two ULP at 1.0 is
+    // exactly *one* ULP at its 3.83, so the tightened constant would ask a neural net
+    // for bit equality. It is asserted at the ceiling in
+    // `tree_bundles_are_gated_at_bit_equality_and_graphs_at_the_documented_tolerance`,
+    // by name, so it is a declared exception rather than an unchecked one.
+    for name in ["lgbm_binary", "zoo_logistic"] {
         assert_eq!(
             bundle(name).criterion(),
             Criterion::MaxAbsDiff(ONNX_TIGHT_EPS),
@@ -464,11 +494,16 @@ fn a_sub_tolerance_delta_that_crosses_the_trade_threshold_fails_the_gate() {
         .compare_with(&candidate, bundle.criterion(), decision)
         .expect("compare");
 
-    assert!(
-        report.max_abs_diff() < ONNX_TIGHT_EPS,
-        "{}",
-        report.summary()
-    );
+    // Against the bundle's *own* tolerance, which is the claim being made — "well under
+    // the tolerance and still red". Naming a constant here instead was the same coupling
+    // the delta above was rewritten to escape: this read `ONNX_TIGHT_EPS` while the delta
+    // came from the manifest, so the day `mlp_regressor` stopped declaring that constant
+    // the assertion failed for a reason unrelated to what the test is about.
+    let eps = match bundle.criterion() {
+        Criterion::MaxAbsDiff(eps) => eps,
+        Criterion::BitExact => unreachable!("a graph bundle declares a tolerance"),
+    };
+    assert!(report.max_abs_diff() < eps, "{}", report.summary());
     assert_eq!(report.flips(), 1, "{}", report.summary());
     assert!(!report.passed(), "{}", report.summary());
     let summary = report.summary();

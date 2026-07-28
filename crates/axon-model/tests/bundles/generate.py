@@ -48,7 +48,12 @@ import tempfile
 import numpy as np
 
 from axon.models import ArtifactMeta, ModelRegistry, export_artifact
-from axon.parity.rust_gate import quantile_decision, write_bundle_from_registry
+from axon.parity.rust_gate import (
+    ONNX_EPS,
+    Criterion,
+    quantile_decision,
+    write_bundle_from_registry,
+)
 
 HERE = pathlib.Path(__file__).resolve().parent
 
@@ -186,6 +191,12 @@ def onnx_bundle(name: str, seed: int) -> None:
             features=rng.normal(size=(96, dim)).astype(np.float32),
             out_dir=HERE / name,
             decision=DECISION,
+            # The family ceiling, declared rather than defaulted. ONNX_TIGHT_EPS is an
+            # absolute bound meaning "two ULP at 1.0"; this net's scores reach 3.83,
+            # where the same constant is *one* ULP — so defaulting would ask a neural
+            # net for bit equality on a runtime that reassociates matmuls. See the note
+            # in `cross_language_parity.rs`.
+            criterion=Criterion("max_abs_diff", ONNX_EPS),
             overwrite=True,
         )
 

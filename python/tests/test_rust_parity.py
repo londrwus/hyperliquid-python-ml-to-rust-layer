@@ -318,13 +318,25 @@ def test_a_graph_bundle_declares_what_graphs_here_achieve_not_the_family_ceiling
 def test_every_committed_graph_bundle_declares_the_tightened_criterion(repo_root):
     # The bundles are the thing the Rust gate actually runs on, so a regeneration that
     # quietly fell back to the family ceiling would restore the slack with nothing to
-    # notice. `mlp_regressor` had been declaring 1e-5 while measuring 0e0.
+    # notice.
+    #
+    # `mlp_regressor` is the documented exception, and it is named here rather than
+    # skipped so that a *second* bundle drifting to the ceiling still reddens.
+    # ONNX_TIGHT_EPS is an absolute bound meaning "two ULP at 1.0", so what it demands
+    # depends on the scores it meets: four ULP on a probability in [0, 1], but exactly
+    # *one* on this net, whose scores reach 3.83. It had been tightened off 1e-5 because
+    # this machine measured 0e0 — and that is the reading ADR-0021 refuses, since a
+    # runner whose `tract` picks a different matmul kernel measures two ULP and reddens
+    # with nothing wrong. A neural net is the one family this repo never claimed bits
+    # for, so it is held to ADR-0003's 1e-5.
+    ceiling = {"mlp_regressor": Criterion("max_abs_diff", ONNX_EPS)}
     graphs = [d for d in committed(repo_root) if read_parity_bundle(d).kind == "onnx"]
     assert graphs, "no committed graph bundles; this check would pass by vacuity"
     for directory in graphs:
         bundle = read_parity_bundle(directory)
-        assert bundle.criterion == Criterion("max_abs_diff", ONNX_TIGHT_EPS), (
-            f"{directory.name} declares {bundle.criterion}, not the tightened criterion"
+        expected = ceiling.get(directory.name, Criterion("max_abs_diff", ONNX_TIGHT_EPS))
+        assert bundle.criterion == expected, (
+            f"{directory.name} declares {bundle.criterion}, not {expected}"
         )
 
 

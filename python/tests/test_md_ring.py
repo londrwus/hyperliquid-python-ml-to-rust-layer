@@ -281,7 +281,10 @@ def _run_axon(
     block = (
         "[md_ring]\n"
         f"enabled = {'true' if enabled else 'false'}\n"
-        f'path = "{ring}"\n'
+        # TOML basic strings take backslash escapes, and a Windows ring path is full of
+        # them: `path = "C:\Users\..."` is not a path with a `\U` in it, it is a parse
+        # error. Escaped here rather than quoted differently so any path survives.
+        f'path = "{ring.replace(chr(92), chr(92) * 2)}"\n'
         f"capacity = {capacity}\n"
         'policy = "on_change"\n\n'
     )

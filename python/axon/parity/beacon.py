@@ -357,7 +357,12 @@ class MdBeaconReader:
         try:
             if os.fstat(fd).st_size < MD_BEACON_SIZE:
                 return False  # created, not yet sized
-            self._mm = mmap.mmap(fd, MD_BEACON_SIZE, prot=mmap.PROT_READ)
+            # `access=` rather than `prot=`: the latter is the POSIX spelling and does
+            # not exist on Windows, where the import succeeds and the attribute lookup
+            # is what fails. `ACCESS_READ` is defined on both and means the same thing —
+            # a read-only mapping, which is the property this reader wants stated rather
+            # than a platform's name for it.
+            self._mm = mmap.mmap(fd, MD_BEACON_SIZE, access=mmap.ACCESS_READ)
         finally:
             os.close(fd)
         return self._mm is not None

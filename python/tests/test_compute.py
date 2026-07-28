@@ -195,6 +195,7 @@ def client(home, runner, **kwargs) -> HwschedClient:
 
 def approved(job: ComputeJob, max_usd: float = 1.0) -> Approval:
     """An approval minted the only way one can be: from a plan."""
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     with tempfile.TemporaryDirectory() as tmp:
         home = _make_home(Path(tmp))
         return client(home, Recorder(ok(PLAN_APPROVED))).plan(job).approve(max_usd)
@@ -391,6 +392,7 @@ def test_artifacts_must_be_volume_uris_not_return_values():
 # the JSON contract and the exit-code taxonomy
 # --------------------------------------------------------------------------- #
 def test_plan_contract_is_parsed_into_typed_fields(fake_home, sweep):
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     runner = Recorder(ok(PLAN_APPROVED))
     outcome = client(fake_home, runner).plan(sweep)
 
@@ -410,6 +412,7 @@ def test_plan_contract_is_parsed_into_typed_fields(fake_home, sweep):
 def test_budget_refusal_is_returned_by_plan_not_raised(fake_home):
     """Exit 2 is a per-profile guard decision, not a crash: a dry run that throws on
     a refusal cannot tell you how far over the cap you are."""
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     job = train_model("axon-lstm-train", "axon.models.train_dnn:fit",
                       framework="torch", data_size_gb=40.0, max_usd=0.05)
     runner = Recorder(ok(PLAN_REFUSED, code=2, stderr="budget guard REFUSED this plan"))
@@ -425,6 +428,7 @@ def test_budget_refusal_is_returned_by_plan_not_raised(fake_home):
 def test_validation_exit_is_raised_rather_than_read_as_an_empty_plan(fake_home, sweep):
     """Exit 3 prints only to stderr; treating the empty stdout as a $0 plan would
     approve a job that was never costed."""
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     runner = Recorder(CliResult(3, "", "validation error: 1 validation error for JobSpec"))
     with pytest.raises(HwschedError, match="rejected the spec"):
         client(fake_home, runner).plan(sweep)
@@ -433,6 +437,7 @@ def test_validation_exit_is_raised_rather_than_read_as_an_empty_plan(fake_home, 
 def test_argparse_usage_error_is_not_mistaken_for_a_budget_refusal(fake_home, sweep):
     """argparse also exits 2. The two are told apart by the payload: a real refusal
     still prints its report on stdout, a usage error prints only a banner."""
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     runner = Recorder(CliResult(2, "", "usage: hwsched [-h]\nhwsched: error: unrecognized"))
     with pytest.raises(HwschedError, match="not the budget"):
         client(fake_home, runner).plan(sweep)
@@ -521,12 +526,14 @@ def test_approval_is_single_use(fake_home, sweep):
 def test_approval_below_the_high_estimate_is_refused(fake_home, sweep):
     """The guard prices the worst case; approving only the expected case would admit
     a job whose bad path is over budget."""
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     outcome = client(fake_home, Recorder(ok(PLAN_APPROVED))).plan(sweep)
     with pytest.raises(ApprovalError, match="below the plan's high estimate"):
         outcome.approve(max_usd=0.015)
 
 
 def test_a_refused_plan_cannot_be_approved(fake_home):
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     job = train_model("axon-lstm-train", "m:f", framework="torch", max_usd=0.05)
     outcome = client(fake_home, Recorder(ok(PLAN_REFUSED, code=2))).plan(job)
     with pytest.raises(BudgetRefused):
@@ -546,6 +553,7 @@ def test_global_flags_follow_the_subcommand(fake_home, sweep):
     """hwsched attaches ``--provider``/``--config`` to each subcommand, not to the
     top-level parser; putting them first is an argparse usage error that exits 2 and
     reads like a budget refusal."""
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     runner = Recorder(ok(PLAN_APPROVED))
     client(fake_home, runner, provider="fake").plan(sweep)
     argv = runner.argv
@@ -570,6 +578,7 @@ def test_axon_source_root_is_on_the_subprocess_pythonpath(fake_home, sweep):
     """hwsched's Modal adapter resolves the entrypoint's top-level package on the
     *client's* sys.path to mount it into the image; an ``axon.*`` entrypoint that is
     not importable here fails at submit, after the app has been deployed."""
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     runner = Recorder(ok(PLAN_APPROVED))
     client(fake_home, runner).plan(sweep)
     entries = runner.env["PYTHONPATH"].split(os.pathsep)
@@ -582,6 +591,7 @@ def test_axon_source_root_is_on_the_subprocess_pythonpath(fake_home, sweep):
 def test_the_spec_path_is_absolute(fake_home, sweep):
     """The subprocess runs with the hwsched checkout as its cwd, so a relative spec
     path would resolve against the wrong repository."""
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     runner = Recorder(ok(PLAN_APPROVED))
     client(fake_home, runner).plan(sweep)
     spec_arg = next(a for a in runner.argv if a.endswith(".yaml"))
@@ -592,6 +602,7 @@ def test_monthly_override_raises_the_cap_and_never_disables_the_guard(fake_home,
     """The one sanctioned lever for a bigger-balance profile. It moves the number the
     guard enforces; ``allow_overage`` — which would switch the comparison off — is
     never set, and hwsched.toml is never written."""
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     runner = Recorder(ok(PLAN_APPROVED))
     outcome = client(fake_home, runner, monthly_budget_usd=250.0).plan(sweep)
     assert runner.env["HWSCHED_MONTHLY_USD"] == "250.0"
@@ -601,6 +612,7 @@ def test_monthly_override_raises_the_cap_and_never_disables_the_guard(fake_home,
 
 
 def test_an_isolated_store_keeps_a_test_run_out_of_the_real_ledger(fake_home, sweep, tmp_path):
+    pytest.importorskip("yaml")  # emitting the JobSpec needs the `compute` extra
     runner = Recorder(ok(PLAN_APPROVED))
     client(fake_home, runner, store_path=tmp_path / "runs.db").plan(sweep)
     assert runner.env["HWSCHED_STORE_PATH"] == str(tmp_path / "runs.db")

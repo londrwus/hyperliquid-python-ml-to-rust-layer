@@ -355,6 +355,35 @@ fn corrupted_copy(source: &str, scratch: &str, edit: impl FnOnce(&Path)) -> Path
     dir
 }
 
+/// Whether this build runs against the libm the committed matrices were taken against.
+///
+/// The bundles are NumPy's answers on glibc. ADR-0035 measured `log` agreeing to 0 ULP
+/// over a 200 000-sample sweep *there*, and states plainly that this does not make the
+/// gate portable: `log` is not in IEEE-754's correctly-rounded list, so another libm may
+/// round the last bit differently with nothing wrong on either side.
+const REFERENCE_LIBM: bool = cfg!(target_env = "gnu");
+
+/// Distance in ULPs between two finite doubles, via the usual monotonic re-keying of the
+/// bit pattern. Non-finite or opposite-infinity inputs come back saturated so a caller
+/// bounding this can never read them as "close".
+fn ulps_between(a: f64, b: f64) -> u128 {
+    if a == b {
+        return 0;
+    }
+    if !a.is_finite() || !b.is_finite() {
+        return u128::MAX;
+    }
+    fn ordered(x: f64) -> i128 {
+        let bits = x.to_bits();
+        if bits >> 63 == 1 {
+            -((bits & !(1u64 << 63)) as i128)
+        } else {
+            bits as i128
+        }
+    }
+    (ordered(a) - ordered(b)).unsigned_abs()
+}
+
 #[test]
 fn rust_reproduces_pythons_matrix_for_every_cell_of_every_committed_bundle() {
     // The claim ADR-0021 said a model bundle could never make. These matrices are
@@ -372,17 +401,48 @@ fn rust_reproduces_pythons_matrix_for_every_cell_of_every_committed_bundle() {
 
         let report = bundle.check().unwrap_or_else(|e| panic!("{name}: {e}"));
         assert_eq!(report.cells_compared(), rows * cols, "{name}");
-        assert_eq!(report.bit_mismatches(), 0, "{}", report.summary());
+        // A window that filled on one side and not the other is a structural defect, not
+        // arithmetic, so it is refused on every platform.
         assert_eq!(report.nan_disagreements(), 0, "{}", report.summary());
-        assert_eq!(report.worst_column(), None, "{}", report.summary());
-        // Zero, not "inside a tolerance" — there is no tolerance here to be inside of.
-        assert_eq!(
-            report.max_abs_diff().to_bits(),
-            0.0f64.to_bits(),
-            "{}",
-            report.summary()
-        );
-        report.assert_passed();
+
+        if REFERENCE_LIBM {
+            assert_eq!(report.bit_mismatches(), 0, "{}", report.summary());
+            assert_eq!(report.worst_column(), None, "{}", report.summary());
+            // Zero, not "inside a tolerance" — there is no tolerance here to be inside of.
+            assert_eq!(
+                report.max_abs_diff().to_bits(),
+                0.0f64.to_bits(),
+                "{}",
+                report.summary()
+            );
+            report.assert_passed();
+        } else {
+            // ADR-0035 §"`libm_columns` is a signpost, not a tolerance": these matrices are
+            // NumPy's, taken against glibc's `log`, which is not in IEEE-754's
+            // correctly-rounded list — so bit equality is a property of *that* libm pair and
+            // the ADR says so outright ("it does not make the gate portable"). Claiming it
+            // here would be claiming something never measured. What is still owed off the
+            // reference libm is the ADR's own first question — "did it redden *only* on
+            // those columns?" — so that is what is asserted, and it is not a tolerance: a
+            // divergence anywhere else, or of more than a last bit, still fails.
+            for d in report.divergences() {
+                assert!(
+                    report.libm_columns().iter().any(|c| c == &d.column),
+                    "{name}: column {:?} diverged and does not reach libm — this is not the \
+                     documented libm difference. {}",
+                    d.column,
+                    report.summary()
+                );
+                let ulps = ulps_between(d.reference, d.candidate);
+                assert!(
+                    ulps <= 1,
+                    "{name}: column {:?} diverged by {ulps} ULP, not the last bit a differing \
+                     libm explains. {}",
+                    d.column,
+                    report.summary()
+                );
+            }
+        }
         cells += report.cells_compared();
     }
     // The denominator of the whole claim, asserted rather than described. A corpus that

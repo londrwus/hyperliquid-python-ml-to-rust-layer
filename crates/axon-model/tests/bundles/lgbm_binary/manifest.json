@@ -10,10 +10,10 @@
     "kind": "max_abs_diff"
   },
   "decision": {
-    "long_at_approx": 0.6853209733963013,
-    "long_at_bits": "0x3f2f7132",
-    "short_at_approx": 0.3560504913330078,
-    "short_at_bits": "0x3eb64c40"
+    "long_at_approx": 0.684711217880249,
+    "long_at_bits": "0x3f2f493c",
+    "short_at_approx": 0.35765179991722107,
+    "short_at_bits": "0x3eb71e23"
   },
   "decisions": {
     "bytes": 256,

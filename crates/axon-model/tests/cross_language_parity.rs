@@ -589,3 +589,36 @@ fn a_candidate_of_the_wrong_length_is_refused_rather_than_compared_pairwise() {
         Err(BundleError::Mismatch(_))
     ));
 }
+
+#[test]
+fn no_committed_decision_turns_on_a_single_ulp() {
+    // The decision half of this gate is only meaningful if it survives the numbers
+    // the *numeric* half already forgives. A threshold taken as a quantile of the
+    // reference is, with duplicates in the holdout, equal to scores in it — and the
+    // rule is `>= long_at`, so those rows decide long only while the candidate
+    // reproduces the reference's last bit. This backend does not promise that bit:
+    // ONNX fixes no operator order, and `tract` picks a 16-wide sigmoid kernel on an
+    // AVX-512 host and an 8-wide one elsewhere. A threshold on the score grid is the
+    // decision-half twin of the criterion "fitted to luck" that ADR-0021 refuses, and
+    // it reddened this gate on one CI runner and not another for no defect at all.
+    //
+    // So: nudging any reference score by one ULP either way must not move its side.
+    for name in BUNDLES {
+        let bundle = bundle(name);
+        let decision = bundle.decision();
+        for (i, &score) in bundle.reference().iter().enumerate() {
+            let side = decision.side(score);
+            for nudged in [score.next_up(), score.next_down()] {
+                assert_eq!(
+                    decision.side(nudged),
+                    side,
+                    "{name} row {i}: {score} ({:#010x}) decides {side}, but one ULP away \
+                     {nudged} ({:#010x}) decides {} — a threshold sitting on the score grid",
+                    score.to_bits(),
+                    nudged.to_bits(),
+                    decision.side(nudged),
+                );
+            }
+        }
+    }
+}

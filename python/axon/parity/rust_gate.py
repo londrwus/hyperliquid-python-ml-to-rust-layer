@@ -307,15 +307,53 @@ def quantile_decision(lower: float = 0.4, upper: float = 0.6) -> Callable[[np.nd
         raise BundleError(f"need 0 < lower < upper < 1, got lower={lower} upper={upper}")
 
     def choose(scores: np.ndarray) -> Decision:
-        short_at, long_at = np.quantile(np.asarray(scores, dtype=np.float64), [lower, upper])
+        ref = np.asarray(scores, dtype=np.float64)
+        short_at, long_at = np.quantile(ref, [lower, upper])
         if not np.float32(short_at) < np.float32(long_at):
             raise BundleError(
                 f"quantiles {lower} and {upper} of the reference collapse to the same float32 "
                 f"({short_at}); the holdout does not spread enough to gate a decision on"
             )
+        long_at = _off_the_score_grid(long_at, ref, downward=True)
+        short_at = _off_the_score_grid(short_at, ref, downward=False)
+        if not np.float32(short_at) < np.float32(long_at):
+            raise BundleError(
+                f"separating the thresholds from the score grid collapsed them "
+                f"(short_at={short_at} long_at={long_at}); the holdout is too dense to gate on"
+            )
         return Decision(long_at=float(long_at), short_at=float(short_at))
 
     return choose
+
+
+def _off_the_score_grid(threshold: float, scores: np.ndarray, *, downward: bool) -> float:
+    """Move *threshold* off any score it lands exactly on, without moving a decision.
+
+    A quantile of the reference is, by construction, often *equal* to one of the scores
+    it was taken over — and with duplicates in the holdout, equal to many of them. That
+    is a threshold fitted to luck in the sense ADR-0021 refuses for the criterion: the
+    rule is ``>= long_at``, so a row sitting exactly on it decides long only while the
+    candidate reproduces the reference's last bit. The ONNX backend does not promise
+    that bit (this module's own note on ``expf``, and tract selects a 16-wide sigmoid
+    kernel on an AVX-512 host and an 8-wide one elsewhere), so such a threshold reddens
+    the gate on a different CPU for no defect at all — which is exactly what it did.
+
+    The fix is to place the threshold in the *gap* rather than on the grid: halfway to
+    the nearest distinct score on the side the rule does not include. Every decision is
+    preserved — no achievable score lies between the old threshold and the new one — and
+    the margin becomes the width of that gap instead of zero, so a last-bit difference
+    can no longer cross it.
+    """
+    grid = np.unique(np.asarray(scores, dtype=np.float32))
+    here = np.float32(threshold)
+    if not np.any(grid == here):
+        return float(here)  # already in a gap
+    neighbours = grid[grid < here] if downward else grid[grid > here]
+    if neighbours.size == 0:
+        # No score on that side: step one ULP away, which is all the room there is.
+        return float(np.nextafter(here, np.float32(-np.inf if downward else np.inf)))
+    nearest = neighbours.max() if downward else neighbours.min()
+    return float(np.float32((np.float64(nearest) + np.float64(here)) / 2.0))
 
 
 # ── the reference ─────────────────────────────────────────────────────────────

@@ -1306,14 +1306,43 @@ mod tests {
         assert_eq!(run_to_bytes("det-a"), run_to_bytes("det-b"));
     }
 
+    /// A path nothing can create, on any platform: its parent is an existing *file*.
+    ///
+    /// `/nonexistent-dir-axon/...` only refuses where the filesystem root is unwritable.
+    /// On Windows it resolves to `C:\nonexistent-dir-axon\...`, which the build user can
+    /// create — and `capture.rs` does exactly that, via `create_dir_all`. So the capture
+    /// test below was manufacturing the very directory this one needs to be absent, and
+    /// the two failed together on Windows and nowhere else. Anchoring under a file is
+    /// portable (a file is not a directory anywhere) and cannot be conjured by a test
+    /// running beside this one.
+    fn blocked_path(tag: &str, leaf: &str) -> (std::path::PathBuf, String) {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        static N: AtomicU64 = AtomicU64::new(0);
+        let blocker = std::env::temp_dir().join(format!(
+            "axon-not-a-dir-{tag}-{}-{}",
+            std::process::id(),
+            N.fetch_add(1, Ordering::Relaxed)
+        ));
+        std::fs::write(&blocker, b"not a directory").expect("write the blocking file");
+        // Component by component, so the caller's `/` does not travel into a path on a
+        // platform that does not spell separators that way.
+        let mut inside = blocker.clone();
+        for part in leaf.split('/') {
+            inside.push(part);
+        }
+        (blocker, inside.to_string_lossy().into_owned())
+    }
+
     #[test]
     fn a_market_data_ring_that_cannot_be_created_refuses_to_start_the_session() {
         // Degrading here would hand back the exact gap the publisher exists to close: a
         // session that reports OK while Python is being fed nothing.
         let mut cfg = offline_cfg();
         cfg.md_ring.enabled = true;
-        cfg.md_ring.path = "/nonexistent-dir-axon/md.ring".into();
+        let (blocker, path) = blocked_path("mdring", "md.ring");
+        cfg.md_ring.path = path;
         let err = run_offline(&cfg).unwrap_err();
+        let _ = std::fs::remove_file(&blocker);
         assert!(matches!(err, RuntimeError::MdRing(_)), "{err:?}");
     }
 
@@ -1541,8 +1570,12 @@ mod tests {
         // path is a two-second fix now rather than a soak with no artifact at the end.
         let mut cfg = offline_cfg();
         cfg.capture.enabled = true;
-        cfg.capture.path = "/nonexistent-dir-axon/deep/session.jsonl".into();
+        // Not a merely-absent directory: the recorder creates what it names, parents and
+        // all, so "absent" is only unwritable where the root is. See `blocked_path`.
+        let (blocker, path) = blocked_path("capture", "deep/session.jsonl");
+        cfg.capture.path = path;
         let err = run_offline(&cfg).unwrap_err();
+        let _ = std::fs::remove_file(&blocker);
         assert!(matches!(err, RuntimeError::Capture(_)), "{err:?}");
     }
 

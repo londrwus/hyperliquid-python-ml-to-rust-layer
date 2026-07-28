@@ -1709,8 +1709,22 @@ mod tests {
         // Unlike the signal ring, this end *creates* the file: a failure is a bad path
         // or a permissions problem, and retrying cannot fix it. Running on would leave a
         // strategy with no feature feed and a session reporting OK.
-        let c = cfg("/nonexistent-dir-axon/md.ring", 8, MdWritePolicy::OnChange);
-        assert!(MdPublisher::open(&c, WINDOW).is_err());
+        //
+        // The unopenable path is one *inside a file*, not a merely-absent directory: an
+        // absent directory is only unopenable where the filesystem root refuses writes,
+        // which is a Unix property and not a Windows one. A file is not a directory
+        // anywhere, and no test running beside this one can turn it into one.
+        let blocker =
+            std::env::temp_dir().join(format!("axon-not-a-dir-mdring-{}", std::process::id()));
+        std::fs::write(&blocker, b"not a directory").expect("write the blocking file");
+        let c = cfg(
+            &blocker.join("md.ring").to_string_lossy(),
+            8,
+            MdWritePolicy::OnChange,
+        );
+        let opened = MdPublisher::open(&c, WINDOW);
+        let _ = std::fs::remove_file(&blocker);
+        assert!(opened.is_err());
     }
 
     #[test]

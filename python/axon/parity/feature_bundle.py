@@ -98,6 +98,16 @@ earlier column. **It is a signpost, not a tolerance.** If this gate ever reddens
 another platform, the first question is whether it reddened *only* on those columns; if
 it did, the argument is about ``log`` and not about the runtime.
 
+That question is now asked by the reader rather than by whoever is holding the pager,
+because it stopped being hypothetical: NumPy selects its ``log`` loop from the CPU it
+finds at import, so *the same numpy 2.5.1 that wrote these matrices* recomputes a cell a
+last bit differently on a machine with different SIMD, and two CI runners on one version
+came out one green and one red. So a recomputation that disagrees is still a defect
+**unless** every disagreeing cell is in :data:`libm_columns` and is one ULP — the
+signpost deciding *where* a difference is allowed to be, not *how large* the gate's
+tolerance is. A column that never reaches libm must still agree to the bit, two ULP in a
+column that does still fails, and a NaN meeting a number is not one ULP from anything.
+
 **A corpus that never finishes warming up is refused.** An all-NaN matrix compares
 bit-exactly against another all-NaN matrix, so a Rust runtime that returned NaN for
 everything would pass — the same "a check that can only come out one way is a decoration"
@@ -595,13 +605,41 @@ def read_feature_bundle(path: str | os.PathLike[str]) -> FeatureBundle:
         np.ascontiguousarray(recomputed).view(np.uint64) != features.view(np.uint64)
     )
     if disagree.size:
-        row, column = divmod(int(disagree[0]), len(columns))
-        raise BundleError(
-            f"{directory}: row {row} column {columns[column]!r} is recorded as "
-            f"{_bits(features[row, column])} and this build computes "
-            f"{_bits(recomputed[row, column])} from the bundle's own inputs — the recorded "
-            "reference is not the answer to the question the bundle asks"
-        )
+        # Bit equality is the claim, and it is a claim about *this* stack on *this* CPU.
+        # `np.log` is not correctly rounded — ADR-0035 measured it agreeing to 0 ULP with
+        # glibc over a 200 000-sample sweep and said plainly that this "does not make the
+        # gate portable" — and NumPy picks its log loop from the CPU it finds at import,
+        # so the same numpy 2.5.1 that wrote these matrices recomputes one of 6 075 cells
+        # a last bit differently on a machine with different SIMD. Two CI runners on the
+        # same version, one green and one red, is what that looks like.
+        #
+        # So a divergence is still a defect unless it is exactly the documented one, and
+        # `libm_columns` decides which: the ADR's own first question is "did it redden
+        # *only* on those columns?". This is not slack granted to the gate — it is not a
+        # tolerance, which `libm_columns` explicitly is not. A column that never reaches
+        # libm must still agree to the bit, and a libm column that moved by more than a
+        # last bit still fails. Everything else in the file is unchanged, including the
+        # NaN-cell counts above, which is where a window that did not fill would show up.
+        libm = set(str(c) for c in manifest["libm_columns"])
+        for index in disagree:
+            row, column = divmod(int(index), len(columns))
+            name = str(columns[column])
+            recorded, computed = features[row, column], recomputed[row, column]
+            why: str | None = None
+            if name not in libm:
+                why = "that column never reaches libm, so nothing explains a difference"
+            elif _ulps_apart(recorded, computed) > 1:
+                why = (
+                    f"that is {_ulps_apart(recorded, computed)} ULP, and a differing libm "
+                    "explains one"
+                )
+            if why is not None:
+                raise BundleError(
+                    f"{directory}: row {row} column {name!r} is recorded as "
+                    f"{_bits(recorded)} and this build computes {_bits(computed)} from the "
+                    f"bundle's own inputs — {why}. The recorded reference is not the answer "
+                    "to the question the bundle asks"
+                )
 
     return FeatureBundle(
         path=directory,
@@ -634,6 +672,26 @@ def _read_f64(path: Path, rows: int, cols: int) -> np.ndarray:
     # else, and on a big-endian one it is the byte-order move that makes the values
     # computable. Either way the caller gets a native, writable, C-contiguous array.
     return np.frombuffer(raw, dtype="<f8").reshape(rows, cols).astype(np.float64)
+
+
+def _ulps_apart(a: float, b: float) -> int:
+    """Distance in ULPs between two float64s, via the usual monotonic re-keying.
+
+    Saturates for a non-finite pair so a caller bounding this can never read "NaN met a
+    number" as "one bit apart" — that is a window that did not fill, a different
+    diagnosis from arithmetic whose last bit moved.
+    """
+    x, y = float(a), float(b)
+    if x == y:
+        return 0
+    if not (np.isfinite(x) and np.isfinite(y)):
+        return 1 << 62
+
+    def ordered(value: float) -> int:
+        bits = int(np.float64(value).view(np.uint64))
+        return -(bits & ~(1 << 63)) if bits >> 63 else bits
+
+    return abs(ordered(x) - ordered(y))
 
 
 def _bits(value: float) -> str:

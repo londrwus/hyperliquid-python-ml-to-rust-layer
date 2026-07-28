@@ -285,7 +285,11 @@ def _run_axon(
         f"capacity = {capacity}\n"
         'policy = "on_change"\n\n'
     )
-    dump, n = _MD_SECTION.subn(block, dump)
+    # A function replacement, not a template one: `block` carries `ring`, and on Windows
+    # that is a path like `C:\Users\runneradmin\...`, whose `\U` re.sub reads as a broken
+    # escape in the *replacement* string and refuses with `bad escape \U`. A callable is
+    # substituted verbatim, so the path travels as itself on every platform.
+    dump, n = _MD_SECTION.subn(lambda _match: block, dump)
     assert n == 1, "the dumped config no longer has an [md_ring] section"
 
     cfg = tmp_path / "axon.toml"

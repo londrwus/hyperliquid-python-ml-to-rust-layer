@@ -1,0 +1,115 @@
+# M7 soak — a long read-only sandbox session against Hyperliquid testnet.
+#
+# Read-only is stated the only way it can be stated: `intent.enabled = false`
+# (ADR-0020 §9). The properties under soak — reconnect, resubscribe, the `userFills`
+# snapshot replay, dead-man's-switch re-arm and `/info` reconciliation — need no order
+# flow, and a session that cannot place an order cannot leave one resting after hours
+# unattended.
+#
+# The dead-man's switch stays **on** even though nothing here can trade: re-arming is
+# one of the things being soaked, and an arm is not a firing. Only a firing spends one
+# of the venue's ten daily `scheduleCancel` triggers; an arm spends address credits
+# (4 320/day at this cadence) and moves a deadline nobody will reach.
+#
+# `venue.ws_url` points at the loopback relay (`scripts/soak/ws-relay.py`), which is how
+# the outages are induced. `info_url` and `exchange_url` are left unset so they resolve
+# to the real testnet endpoints: reconciliation and the safety loop must keep talking to
+# the venue *through* an outage that only severs market data, which is the awkward
+# interleaving this soak exists to observe.
+#
+# Feeds are Bbo + L2Book + Ticker and deliberately NOT Candle. A forming candle carries
+# `ts_event = open_time + interval`, so it drags `CoreHandler::last_ts` up to a whole
+# interval into the future and every later pass is judged against a clock that has not
+# happened yet (ADR-0026's minus column). Adding candles here would make every finding
+# in a multi-hour run ambiguous.
+environment = "sandbox"
+
+[venue]
+name = "hyperliquid"
+network = "testnet"
+account = "0x0000000000000000000000000000000000000000"  # fill in: the account AXON_HL_SECRET_KEY trades for
+ws_url = "ws://127.0.0.1:8765/ws"
+
+[session]
+bus_capacity = 4096
+core_poll_us = 500
+# Every 5 s for hours: the status line is the time series this soak is measured on, and
+# a coarser one would put a whole induced outage inside a single sample.
+status_interval_ms = 5000
+mark_max_age_ms = 10000
+feeds = [
+    "Bbo",
+    "L2Book",
+    "Ticker",
+]
+
+[safety]
+dead_mans_switch = true
+lead_ms = 60000
+rearm_interval_ms = 20000
+
+[reconcile]
+interval_ms = 15000
+grace_ms = 5000
+rate_limit_every = 10
+
+[governor]
+place_reserve_credits = 1000
+place_reserve_ip_weight = 200
+initial_address_cap = 10000
+
+[ipc]
+signal_ring_path = "/dev/shm/m7-soak-signal.ring"
+capacity = 1024
+
+[intent]
+enabled = false
+drain_interval_ms = 1
+max_per_drain = 32
+max_signal_age_ms = 2000
+queue_capacity = 64
+submit_poll_ms = 2
+attach_retry_ms = 1000
+taker_slippage_bps = 50
+min_order_qty = "0"
+noop_band_bps = 0
+max_order_age_ms = 60000
+
+[md_ring]
+enabled = false
+path = "/dev/shm/m7-soak-md.ring"
+capacity = 4096
+policy = "on_change"
+
+[capture]
+enabled = true
+path = "data/captures/m7-soak.jsonl"
+signals = true
+queue_capacity = 16384
+# 0 = no cap. ADR-0027 made `EventLog` streaming, so the old cap — set where a log
+# stopped being loadable — would now end a soak at the hour the interesting part
+# begins. This box's volume has room measured before the run; the number that replaces
+# the cap is the operator having looked.
+max_bytes = 0
+
+# Three coins rather than one, because the failure this soak is hunting is a *partial*
+# resubscribe: ADR-0020 §7 warns that a live `activeAssetCtx` keeps `MarkCache::get`
+# fresh for an instrument whose `l2Book` came back and whose `bbo` did not. One coin
+# cannot show a subscription set coming back unevenly; three × three feeds can.
+[strategy]
+name = "m7-soak"
+version = 1
+symbols = [
+    "BTC-PERP",
+    "ETH-PERP",
+    "SOL-PERP",
+]
+
+[strategy.model_ref]
+registry_id = "m7-soak"
+version = 1
+
+[strategy.risk]
+max_position = "10"
+max_notional = "100000"
+max_order_qty = "5"

@@ -1,0 +1,21 @@
+[package]
+name = "axon-contracts"
+description = "Axon's shared Python↔Rust contract: the fixed-layout Signal record and SPSC ring layout, generated and compile-time-checked against contracts/schema.toml."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# `min_const_generics` is what makes `Pod`/`Zeroable` hold for an arbitrary `[u8; N]`.
+# Without it bytemuck only implements them for a fixed list of lengths (0..=32, then
+# 48, 64, 96, …), so `MdBar`'s `reserved: [u8; 52]` fails to derive — and the only
+# alternatives would be padding the record to a length that list happens to contain,
+# or inventing a field to absorb the difference. Both would let the *dependency's*
+# impl table decide the wire layout instead of `contracts/schema.toml`. The feature is
+# purely additive (more impls, no behaviour change) and Cargo unions it workspace-wide.
+bytemuck = { workspace = true, features = ["min_const_generics"] }
+
+[build-dependencies]
+toml = { workspace = true }

@@ -1,0 +1,18 @@
+[package]
+name = "axon-core"
+description = "Axon execution-plane core: venue/strategy-agnostic domain types, a deterministic event-time clock and queue, and position math. Depends on nothing venue- or strategy-specific."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+rust_decimal = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+crossbeam-channel = { workspace = true }
+
+[dev-dependencies]
+rust_decimal_macros = { workspace = true }
+serde_json = { workspace = true }

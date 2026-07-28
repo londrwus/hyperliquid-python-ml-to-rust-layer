@@ -1,0 +1,59 @@
+{
+  "bundle_schema": 1,
+  "criterion": {
+    "kind": "bit_exact"
+  },
+  "features": {
+    "bytes": 2784,
+    "cols": 6,
+    "file": "features.f64",
+    "finite_rows": 33,
+    "names": [
+      "ret_1",
+      "mom_5",
+      "z_20",
+      "vol_20",
+      "range_bps",
+      "clv"
+    ],
+    "nan_cells": 51,
+    "rows": 58,
+    "sha256": "sha256:f6d4bcd163e37aacb6efa6ab10abd402a519279da119ad6bbd325f7884cc7701"
+  },
+  "inputs": {
+    "bytes": 1392,
+    "cols": 3,
+    "file": "inputs.f64",
+    "names": [
+      "close",
+      "high",
+      "low"
+    ],
+    "nan_cells": 0,
+    "rows": 58,
+    "sha256": "sha256:5fbea6ab5129e009f40b060be32dbace9ef1862f3a8f3231eb90a4fee71350e8"
+  },
+  "libm_columns": [
+    "ret_1",
+    "mom_5",
+    "vol_20"
+  ],
+  "library_version": 1,
+  "note": "Written by axon.parity.feature_bundle; regenerate rather than hand-edit.",
+  "producer": {
+    "numpy": "2.5.1",
+    "python": "3.12.13"
+  },
+  "source": {
+    "description": "bars that crossed a live Hyperliquid testnet socket during the ADR-0029 shadow run: venue frames -> Rust MdPublisher -> MdBar ring -> Python. Carries the two live pathologies no offline history has: a NaN clv on a minute that traded at one price, and gaps where the venue sent no frame at all",
+    "instrument": "BTC",
+    "interval": "1m",
+    "venue": "hyperliquid-testnet"
+  },
+  "spec": {
+    "bytes": 610,
+    "file": "spec.json",
+    "sha256": "sha256:fa34c37a352dae64de08164eb01fff2ad027d19b2ab925356178f6bee74a741d"
+  },
+  "spec_ref": "bar_m1/v1#c503688de24e863f"
+}

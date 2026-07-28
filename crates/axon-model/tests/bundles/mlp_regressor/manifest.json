@@ -1,0 +1,61 @@
+{
+  "artifact": {
+    "bytes": 1264,
+    "file": "model.onnx",
+    "sha256": "sha256:c9efbdd83d993df044cda87d3ac0e248ddda0a7df6e8023c85225e9e76271179"
+  },
+  "bundle_schema": 1,
+  "criterion": {
+    "eps": 2.384185791015625e-07,
+    "kind": "max_abs_diff"
+  },
+  "decision": {
+    "long_at_approx": 0.560577392578125,
+    "long_at_bits": "0x3f0f8200",
+    "short_at_approx": -0.0740220695734024,
+    "short_at_bits": "0xbd9798e2"
+  },
+  "decisions": {
+    "bytes": 96,
+    "counts": {
+      "flat": 18,
+      "long": 39,
+      "short": 39
+    },
+    "file": "decisions.i8",
+    "rows": 96,
+    "sha256": "sha256:5b9aed3f85d04cfea3db5cc1842b4d81d69e93ce690a9dad7709ae63c08f40aa"
+  },
+  "exported_by": {
+    "onnx": "1.22.0",
+    "opset": "17"
+  },
+  "feature_spec_ref": "synthetic_probe/v1#63d5a8208f36e9e1",
+  "features": {
+    "bytes": 1536,
+    "cols": 4,
+    "file": "features.f32",
+    "missing_cells": 0,
+    "rows": 96,
+    "sha256": "sha256:70969f861c9180c5de0f662f6a473d458b105f3a21b14c99d150bf69af07f1f3"
+  },
+  "git_sha": "1bd4d5714d62193c08f1fe158812cbd3c4d6b643-dirty",
+  "kind": "onnx",
+  "model_version": 23,
+  "note": "Written by axon.parity.rust_gate; regenerate rather than hand-edit.",
+  "predictions": {
+    "bytes": 384,
+    "cols": 1,
+    "file": "predictions.f32",
+    "rows": 96,
+    "sha256": "sha256:04c349382ada4cd8f44e4d121d5ae8000aa56a98dc26d9b69d3111c34a6773e4"
+  },
+  "producer": {
+    "numpy": "2.5.1",
+    "onnx": "1.22.0",
+    "onnxruntime": "1.28.0",
+    "python": "3.12.13"
+  },
+  "registry_id": "parity_mlp_regressor",
+  "score_space": "score"
+}

@@ -1,0 +1,165 @@
+# P5 — the Rust half of a shadow-trading session: a live testnet feed publishing
+# **m1 bars** onto the market-data bar ring, and nothing else.
+#
+# Copied from `scripts/soak/soak-testnet-candles.toml` rather than edited into it, so
+# the soak configs stay the record of what the soak ran. Four lines differ and each is
+# named below.
+#
+# ── m1, and why the interval is the whole design ────────────────────────────────
+# `perp_bar`'s longest window is 24 bars, so the serving path has no opinion until the
+# 25th *closed* bar. On hourly bars that is 25 hours and a session cannot outlive its
+# own warmup; on m1 it is 25 minutes. This single line is the difference between a
+# session that can be observed inside an afternoon and one that cannot.
+#
+# The inline-table syntax is load-bearing: `Feed::Candles` carries an interval, so a
+# bare `"Candles"` is a TOML parse error at startup rather than a default. And note the
+# two spellings — the venue's interval is `m1` here, while the Python side of the same
+# session is driven with `--interval 1m` (`axon.strategies.data.INTERVAL_MS`). They are
+# the same minute; nothing converts between them, so both have to be written correctly.
+#
+# ── read-only, stated the only way it can be stated ─────────────────────────────
+# `intent.enabled = false` (ADR-0020 §9). Shadow trading is would-be orders only: what
+# `perp_bar` emits is a *target position* on the signal ring, and nothing in this
+# session may turn one into a signed `/exchange` action. A session that cannot place an
+# order cannot leave one resting.
+#
+# ── and the dead-man's switch is OFF, which is the one departure from the soak ──
+# The soak kept it on because *re-arming* was one of the things being soaked. Nothing
+# here is soaking the safety loop, and an arm is a signed `scheduleCancel` — the only
+# metered action this session could otherwise emit (`/info` reads are free). With the
+# intent source off there is no order for the switch to protect, so arming it would
+# spend address credits to move a deadline nobody can reach. Config validation refuses
+# `dead_mans_switch = false` only when `intent.enabled = true`, which is exactly the
+# pairing that matters: this session sends **nothing signed at all**.
+environment = "sandbox"
+
+[venue]
+name = "hyperliquid"
+network = "testnet"
+account = "0x0000000000000000000000000000000000000000"  # fill in: the account AXON_HL_SECRET_KEY trades for
+# `ws_url`, `info_url` and `exchange_url` are all left unset so they resolve to the
+# real testnet endpoints. The soak pointed `ws_url` at a loopback relay because it was
+# inducing outages; this run wants the venue's own socket, because the claim it exists
+# to support is that a bar crossed one.
+
+[session]
+bus_capacity = 4096
+core_poll_us = 500
+# Every 15 s. Coarser than the soak's 5 s — the time series being measured here is the
+# bar ring, not the status line, and an m1 session prints for an hour or more.
+status_interval_ms = 15000
+mark_max_age_ms = 10000
+feeds = [
+    "Bbo",
+    "L2Book",
+    "Ticker",
+    { Candles = "m1" },
+]
+
+[safety]
+# See the header. Off because nothing here can place an order; the lead and re-arm
+# figures are kept at the soak's values so turning it back on is a one-word edit that
+# does not also need two numbers chosen.
+dead_mans_switch = false
+lead_ms = 60000
+rearm_interval_ms = 20000
+
+[reconcile]
+# Slower than the soak's 15 s: reconciliation is `/info`, which is free, but on a
+# read-only session it is confirming a flat account rather than tracking a position.
+# Once a minute is enough to notice if this session's account ever stopped being flat.
+interval_ms = 60000
+grace_ms = 5000
+rate_limit_every = 10
+
+[governor]
+place_reserve_credits = 1000
+place_reserve_ip_weight = 200
+initial_address_cap = 10000
+
+[ipc]
+# Created but never read: with `intent.enabled = false` no intent source attaches. The
+# Python shadow trader writes its would-be targets onto a ring of its **own**, not this
+# one — a shadow target that landed on the runtime's signal ring is one config flip away
+# from being planned into an order.
+signal_ring_path = "/dev/shm/p5-shadow-signal.ring"
+capacity = 1024
+
+[intent]
+enabled = false
+drain_interval_ms = 1
+max_per_drain = 32
+# **60 s, not the shipped 2 000 ms.** Inert here — with the intent source off nothing
+# reads this ring — and written correctly anyway, because this file is the one a live
+# session gets copied from. A signal's admission window is clamped to
+# `min(ttl_ms, max_signal_age_ms)`, so a bar strategy emitting `ttl_ms = 60_000` on m1
+# bars has *every* signal dropped as Expired against the 2 000 ms default. Agent P4 paid
+# for that once: the symptom is a strategy that emits and never trades, which reads
+# exactly like a warmup that has not finished.
+max_signal_age_ms = 60000
+queue_capacity = 64
+submit_poll_ms = 2
+attach_retry_ms = 1000
+taker_slippage_bps = 50
+min_order_qty = "0"
+noop_band_bps = 0
+max_order_age_ms = 60000
+
+# The whole point of this session. `md_ring.enabled = true` is what creates the bar
+# ring; the soak had this **off**, so it published nothing and no Python process could
+# have attached to it. The bar ring's path is *derived* — `/dev/shm/p5-shadow-md.ring`
+# becomes `/dev/shm/p5-shadow-md.bars.ring` (ADR-0028 §5) — and that derivation is why
+# there is one switch here and not two: an operator who could enable slices and forget
+# bars would run a bar-driven strategy that starts cleanly and never has an opinion.
+[md_ring]
+enabled = true
+path = "/dev/shm/p5-shadow-md.ring"
+# 4096 × 128 B on tmpfs. Oversized on purpose: at two coins × one bar a minute the bar
+# ring takes ~34 hours to wrap, so a reader that pauses cannot lose a bar to the ring —
+# which matters because a ring drop reaches *neither* side of the shadow diff and is
+# the one fault the comparison cannot see (ADR-0029 §1).
+capacity = 4096
+policy = "on_change"
+
+[capture]
+enabled = true
+path = "data/captures/p5-shadow-m1.jsonl"
+signals = true
+queue_capacity = 16384
+# 0 = no cap. A cap set where a log stopped being loadable would end this run at the
+# hour the bars start arriving; `EventLog` streams since ADR-0027, and the volume has
+# room measured before the run.
+max_bytes = 0
+
+# Two coins, not three. One coin cannot show a partial resubscribe, and this run wants
+# a second independent series so that a parity break on one can be read against the
+# other — a break on both is the code, a break on one is that instrument's tape.
+[strategy]
+name = "p5-shadow-m1"
+version = 1
+symbols = [
+    "BTC-PERP",
+    "ETH-PERP",
+]
+
+[strategy.model_ref]
+registry_id = "p5-shadow-m1"
+version = 1
+
+# The **runtime's** risk ceiling, which is not the Python strategy's position size and
+# is routinely confused with it. Nothing here can place an order, so these bound nothing
+# this session does; they are set at the Phase-6 brief's numbers rather than at the
+# soak's 10 BTC so that a copy of this file cannot arrive at a live session carrying a
+# ceiling nobody chose. 0.001 BTC is ~$65 at the price this session ran at — just above
+# the brief's $50 ceiling on purpose, so the *limit* does not sit exactly on the size and
+# reject the order it was meant to allow.
+#
+# The strategy-side size is separate and lives on the Python command line:
+# `--max-position 0.0003` (~$19 of BTC) is the one that decides what a would-be order
+# would have been. `PerpBarParams`' own default is 0.01 BTC — about $640, thirteen times
+# the brief's ceiling — so a shadow transcript that reports notionals must say which of
+# the two it used.
+[strategy.risk]
+max_position = "0.001"
+max_notional = "100"
+max_order_qty = "0.001"

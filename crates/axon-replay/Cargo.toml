@@ -1,0 +1,47 @@
+[package]
+name = "axon-replay"
+description = "Deterministic capture + replay of the core event stream: a JSONL event log writer, a replay source that publishes a captured log back onto the bus in event-time order, and the golden-replay harness that Phase 5's parity gates are built on."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+axon-core = { workspace = true }
+# The signal log's wire form mirrors `axon_contracts::Signal`, which is a `Pod` with
+# no serde derive of its own — the same split the event log makes between the core
+# type and its persisted shape.
+axon-contracts = { workspace = true }
+# A log carries the instrument grids the recording session planned against (ADR-0027),
+# because a replay that plans on a different grid plans different *prices* — inside the
+# harness built to tell a strategy change from a harness change. That needs the port's
+# own `InstrumentTable`, so this is a **normal** dependency and not a dev one.
+#
+# It adds no cycle and no weight: `axon-providers` is a leaf over `axon-core`, which
+# this crate already names. The edge that must stay a dev edge is `axon-runtime`, and
+# that is unchanged.
+axon-providers = { workspace = true }
+rust_decimal = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+rust_decimal_macros = { workspace = true }
+# The replayed chain is the **production** chain: `axon_runtime::CoreHandler` fans
+# each event out to book → marks → tracker in ADR-0013 §1's order, and
+# `axon_runtime::IntentSource` runs the strategy adapter pass. Reimplementing either
+# here would make parity a claim about this harness rather than about the code, so
+# the harness depends on the runtime instead of copying it.
+#
+# It is a **dev**-dependency, and that is the load-bearing part. The production edge
+# has to run the other way — a live session records itself by adding `Capture` to its
+# handler chain, so `axon-runtime` must be free to depend on `axon-replay`. Cargo
+# permits a cycle through a dev-dependency edge and forbids one through a normal
+# edge, so keeping the runtime out of the *library* is what keeps that future legal.
+# The consequence is deliberate: nothing in `src/` may name the runtime, and the
+# chain driver therefore lives in `examples/chain/mod.rs`, shared with `tests/`.
+axon-runtime = { workspace = true }
+axon-execution = { workspace = true }
+axon-strategy = { workspace = true }

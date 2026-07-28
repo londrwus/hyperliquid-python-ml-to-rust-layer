@@ -1,0 +1,22 @@
+# The repo root sets `* text=auto eol=lf`, which is right for everything that is
+# source and catastrophic for everything here. `*.f64` payloads are raw IEEE-754
+# doubles: git's text heuristic only looks for a NUL in the first 8 kB, and a
+# `0x0D 0x0A` pair occurring inside a float would be "normalized" to `0x0A` on
+# checkout — silently shortening the matrix and rewriting the very numbers the
+# gate compares bit for bit. The gate would then fail on a machine whose only sin
+# was checking the repo out, and the failure would read as "the Rust transforms
+# are wrong".
+#
+# This is not hypothetical and it is not a matter of taste. As committed,
+# `all_transforms/features.f64` **already contains two CRLF pairs**, and every
+# file here is currently spared only because it happens to carry a NUL inside its
+# first 8 kB. That is protection by luck: a regenerated bundle over a corpus whose
+# leading values have no zero byte would lose the heuristic and be mangled with
+# nothing to say so. The same argument, and the same file, exist one directory
+# over at `crates/axon-model/tests/bundles/.gitattributes`.
+*.f64   binary
+
+# The manifest and the spec are text and must stay byte-stable: `spec.json` is
+# compared for byte equality against `FeatureSpec::canonical_json()` on every
+# load, so a CRLF checkout would make every bundle fail its own fingerprint check.
+*.json  text eol=lf

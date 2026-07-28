@@ -1,0 +1,28 @@
+# M7 soak, second session — a shorter outage plan for the candles-on window.
+#
+# Fewer and shorter than `plan-long.txt` on purpose. The question this session asks is
+# different: not "does a session survive hours of breaks" (answered by the 1h44m
+# candles-off run) but "does the candle feed change the answer, and does a *bar*
+# subscription come back after a disconnect the way a quote subscription does".
+#
+# `BARS BUT NO CLOCK n` is the specific thing being hunted. It fires when a session is
+# fed bars and nothing else, which is exactly the state a half-restored resubscribe
+# would leave behind — candles back, quotes not. Breaks are therefore frequent enough
+# to give the resubscribe many chances to go wrong, and short enough that the session
+# spends most of the window with all four feeds live.
+
+0    cut  2
+90   cut  20
+200  cut  6
+300  cut  60
+420  cut  1
+520  cut  35
+640  cut  120
+820  cut  0.5
+900  cut  15
+1000 cut  90
+1150 cut  4
+1250 cut  45
+1380 cut  180
+1620 cut  8
+1720 cut  30

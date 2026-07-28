@@ -1,0 +1,253 @@
+# P6-ML-ETH — **the same model, a different coin.** Everything below is
+# `live-ml-testnet-m1.toml` with the instrument changed, and it is a separate file
+# rather than a parameter because a live config is a record of what a run did.
+#
+# The point of a second coin is narrow and worth stating so nobody reads more into it:
+# `zoo_xgboost` was fitted on a **pooled** BTC+ETH+SOL corpus and its feature spec is
+# scale-free (returns, z-scores, a close-location value), so serving it on ETH is not a
+# transfer-learning claim — it is the same model on data it was fitted over, and what
+# the run tests is that the *machinery* is not BTC-shaped. Sizes are the one thing that
+# had to be re-derived: ETH read 1 958 at prep, so the quantities below are ETH's, not
+# a copy of BTC's.
+#
+# Copied from `scripts/sessions/live-testnet-m1.toml` rather than edited into it, for the
+# same reason that file was copied from the shadow config: that one is the record of what
+# the *no-model* run did, and this run's whole point is that a model is in the loop.
+# Every line that differs from it is named below.
+#
+# ── the one claim this session exists to make ──────────────────────────────────
+# Phase 6 could not say that an ML family had ever driven an order at a venue. Every
+# live order this project had placed came from `baseline_z`, a statistical rule with no
+# artifact — chosen deliberately, because a rule with no model isolates the bridge from
+# the model. That isolation has done its job; what is left is the other half.
+#
+# The strategy here is `zoo_xgboost@1`: the one family in the model zoo (ADR-0032) that
+# crosses into Rust **bit-exact**, fitted over 15 595 real testnet m1 bars across BTC,
+# ETH and SOL, with model parity 0e0, feature parity 0.0 at complete coverage on all
+# three coins, and a cross-language bundle at `max_abs_diff = 0e0`.
+#
+# **Its own verdict is SHOULD NOT TRADE** — selection +1.44 bps against a fee drag of
+# 1.61 bps at maker — and that is not a reason to change the model. It is the Phase-6
+# brief's stated shape of a good result: the plumbing is sound and the model is bad,
+# which is exactly the distinction the fidelity ladder exists to preserve. Nothing in
+# this file may be tuned toward profit.
+#
+# ── what decides the order size, and what merely bounds it ─────────────────────
+# The **strategy** decides, through `--max-position` on the runner: 0.0003 BTC. Testnet
+# BTC read 65 117 at session prep, so that is **$19.54** — above the venue's $10 minimum
+# and below the Phase-6 brief's $50 ceiling. A long→short flip is twice that,
+# 0.0006 BTC = **$39.07**, still under the ceiling, and it is the number a position
+# ceiling has to be chosen against.
+#
+# The zoo's own `ZOO_PARAMS.max_position` is 0.001 BTC — **$65**, over the brief's
+# ceiling — which is why the runner states its own and does not take the default.
+#
+# `[strategy.risk]` below only *bounds*: nothing there makes an order smaller, it
+# refuses one that is too large.
+environment = "sandbox"
+
+[venue]
+name = "hyperliquid"
+network = "testnet"
+account = "0x0000000000000000000000000000000000000000"  # fill in: the account AXON_HL_SECRET_KEY trades for
+
+[session]
+bus_capacity = 4096
+core_poll_us = 500
+# Every 15 s. The status line is the only continuous record of a session nobody is
+# watching in a terminal, and it now carries the money and the clock as well.
+status_interval_ms = 15000
+mark_max_age_ms = 10000
+# The inline table is load-bearing: a bare "Candles" is a TOML parse error at startup.
+feeds = [
+    "Bbo",
+    "L2Book",
+    "Ticker",
+    { Candles = "m1" },
+]
+
+[safety]
+dead_mans_switch = true
+lead_ms = 60000
+rearm_interval_ms = 20000
+
+[reconcile]
+# 15 s. This is also what feeds the money view: `clearinghouseState` is where
+# `accountValue` comes from, so the reconcile cadence *is* the P&L refresh cadence, and
+# a session that polled every 60 s would have a venue-side equity up to a minute stale
+# on every status line. `/info` is free, so the cadence costs nothing but CPU.
+interval_ms = 15000
+grace_ms = 5000
+rate_limit_every = 10
+
+[governor]
+place_reserve_credits = 1000
+place_reserve_ip_weight = 200
+initial_address_cap = 10000
+
+[ipc]
+# Created by the **Python** side (`RingProducer` zeroes head and tail on construction),
+# so this path must not already exist when the producer starts.
+signal_ring_path = "/dev/shm/p6-ml-eth-signal.ring"
+capacity = 1024
+
+[intent]
+enabled = true
+drain_interval_ms = 1
+max_per_drain = 32
+# 60 s, matching the zoo's `ttl_ms`. The shipped 2 000 ms ceiling would refuse every
+# signal this strategy emits — an m1 bar reaches the strategy a median 12.9 s after its
+# own close — and the symptom is a strategy that emits and never trades, which reads
+# exactly like a warmup that has not finished.
+max_signal_age_ms = 60000
+queue_capacity = 64
+submit_poll_ms = 2
+attach_retry_ms = 1000
+# Inert: the zoo serves at urgency 0 (post-only), which never crosses.
+taker_slippage_bps = 50
+# 0.0055 ETH ≈ $10.8 — the venue's $10 minimum expressed as a quantity, so a target that
+# DIFFERS from the position by less than the venue will trade is refused locally rather
+# than spending a metered request to be told `minTradeNtlRejected`.
+#
+# It no longer refuses a **close**. The BTC leg's equivalent floor stranded a residue on
+# 2026-07-27: the floor is a churn bound, a close is not churn, and `Planner` now exempts
+# an order that takes the position to exactly flat from this and from the venue minimum
+# alike. See the BTC config for the incident.
+min_order_qty = "0.0055"
+# 0: every target change acts. This model changes its mind about every 4.7 bars, so a
+# no-op band would suppress precisely the re-quotes that make the cancel/replace path
+# visible.
+noop_band_bps = 0
+max_order_age_ms = 60000
+sweep_interval_ms = 1000
+# **The new one, and the reason this session can be left alone** (ADR-0031 amended).
+# The previous live run's sweeper pulled two *exit* orders; a target position is
+# idempotent so nothing re-emitted them; and a short sat open with no working order for
+# about twelve minutes. Three re-quotes of a target the strategy still holds, then the
+# session stops placing and says `UNQUOTED TARGET` instead. Left at the shipped default
+# deliberately — this run is the first evidence about it, and a session that tuned it
+# would be measuring the tuning.
+max_requotes = 3
+
+[md_ring]
+enabled = true
+path = "/dev/shm/p6-ml-eth-md.ring"
+# 4096 × 128 B on tmpfs. Nothing advances the ring's tail until a consumer attaches, so
+# starting this session before the Python producer lets the strategy warm its 21-bar
+# window from history the instant it attaches — which on m1 is 21 minutes saved.
+capacity = 4096
+policy = "on_change"
+
+[capture]
+enabled = true
+path = "data/captures/p6-ml-eth-m1.jsonl"
+signals = true
+queue_capacity = 16384
+max_bytes = 0
+
+# ── the money view (ADR-0036) ─────────────────────────────────────────────────
+# Both are **magnitudes**, in USDC, and both are *warnings*: nothing here can halt the
+# session. A loss limit that pulls the trading switch is a risk control and belongs with
+# the other gates, argued for on its own terms.
+[pnl]
+# 0.50 USDC. One position is $19.54, so this is ~2.6 % of notional — an order of
+# magnitude above anything a handful of maker round trips can cost (the previous live
+# run paid 0.011658 in fees across four fills) and well below a loss that could come
+# from anything but the market. Chosen against *this* size; it is not a percentage,
+# because the account is shared and its balance is not a scale anyone chose.
+max_session_loss = "0.50"
+# 0.25 USDC. Our accounting cannot see funding — funding is not a fill — so drift is
+# expected to be non-zero and to grow slowly. On $19.54 at a typical 0.01 %/hour that is
+# ~0.002 USDC an hour, so this is ~100 hours of funding: it will not fire on the
+# expected cause, and it will fire on the unexpected one, which is a fill on this shared
+# account that no session here ever saw.
+equity_drift_alarm = "0.25"
+
+# ── the latency budgets (ADR-0036) ────────────────────────────────────────────
+# Every one of these is a **declared ceiling**, argued below. None of them refuses
+# anything; `intent.max_signal_age_ms` is the only number that refuses a record, and it
+# is deliberately *wider* than the budget beside it — which is what makes the report
+# useful: it says how often the session would have refused a signal under a tighter
+# window, before anyone tightens it.
+[latency]
+# 20 000 ms. The strategy's opinion is worth one m1 bar (60 s), so a decision that takes
+# a third of its own life to be acted on is late. The measurement this is set against:
+# 53 live m1 bars arrived 1 067 / 9 406 / 62 074 ms after their own close, so a fifth of
+# them would breach this and roughly two thirds would breach 2 000 ms. A budget nothing
+# breaches teaches nobody anything, and one everything breaches is a broken alarm.
+# **The one this session can declare for the first time**, and it is the largest number
+# in the system. 60 000 ms: an m1 bar's opinion is worth one bar, so a decision that
+# arrives after the *next* bar has closed is answering a market that has already moved on.
+#
+# The measurement it is set against: 57 live m1 bars on 2026-07-27 reached the strategy
+# 951 / 12 051 / 111 475 ms after their own close. So the median is comfortably inside
+# this and the maximum is nearly double it — which is the shape a useful budget has. A
+# ceiling nothing breaches teaches nobody anything; one everything breaches is a broken
+# alarm.
+#
+# It could not be declared before because the bar's close was not on the signal wire:
+# schema version 3 added `ts_cause` (`Signal::ts_cause`), the producer stamps it from the
+# bar it is holding, and `latency.rs`'s `bar` stage is what reads it. Before that this gap
+# existed only in the producer's own transcript as `skew_ms` — quotable afterwards, never
+# budgeted.
+#
+# `bar` and `e2e` are **additive**: their sum is bar-close to order-at-the-venue, which is
+# the figure an operator means when they ask how far behind the market this is.
+cause_to_decision_ms = 60000
+signal_age_ms = 20000
+# 1 000 ms. The venue's own published shape: ~0.2 s block commit, p99 0.5–0.9 s over the
+# public internet. A breach here is therefore "worse than Hyperliquid's own tail", which
+# is a statement about the network or the venue and never about this code.
+submit_ack_ms = 1000
+# 25 000 ms — the two above plus slack for the queue and the pass schedule. This is the
+# number an operator means when they ask how fast the loop is: from the strategy
+# deciding to the venue holding the order. Past 25 s, nearly half the opinion's life has
+# been spent getting it there.
+decision_to_ack_ms = 25000
+# Warn when a quarter of a stage's samples are late. A warning on the first breach is
+# permanently on by the second hour, which is the same as no warning.
+breach_warn_pct = 25
+
+# **One coin.** A second instrument would double the notional at risk to answer a
+# question no extra order flow is needed for — and `LiveRunner` is single-instrument by
+# design (two traders on one bar ring each pop a share of the bars and neither can tell
+# that from a quiet feed), so a second coin is a fan-out this session is not the place
+# to write.
+[strategy]
+name = "p6-ml-eth-m1"
+version = 1
+symbols = [
+    "ETH-PERP",
+]
+
+# Mandatory in the schema and **never read** — `grep -rn model_ref crates/` returns two
+# hits, both in `config.rs`. Unlike the no-model run, this one names a registry entry
+# that genuinely exists, and it is still not what loads it: the Python runner does, from
+# `--registry data/models-p6-live --model zoo_xgboost`.
+[strategy.model_ref]
+registry_id = "zoo_xgboost"
+version = 1
+
+# The **runtime's** ceilings, not the strategy's size. Three, each binding on a
+# different failure:
+#
+#   max_position  0.0008 BTC = $52.1 — the most exposure the tracker may project,
+#                 counting resting orders as if they all fill. A long→short flip
+#                 projects 0.0006 at the moment the replacement is placed.
+#   max_order_qty 0.0007 BTC = $45.6 — one order's size. Above the 0.0006 flip.
+#   max_notional  50 — the brief's ceiling itself, checked as qty × **mark**, so it
+#                 keeps holding if BTC moves and the two quantity limits stop being
+#                 worth what they are worth today. This is the one that must never be
+#                 raised.
+# The loss bounds are the **same numbers** as the BTC leg's, and that is deliberate: both
+# legs size to about $19.5 of notional, so what a loss of a given size means is the same
+# on either coin, and a bound that moved with `szDecimals` would be a bound nobody could
+# compare two runs against. `daily_state_path` is the same file too — the day's loss is a
+# property of the *account*, and two legs run back to back on one account share a day.
+[strategy.risk]
+max_position = "0.0255"
+max_notional = "50"
+max_order_qty = "0.0225"
+max_session_loss = "1.00"
+max_daily_loss = "2.00"
+daily_state_path = "data/p6/day-loss-testnet.json"

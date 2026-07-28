@@ -1,0 +1,9 @@
+# The repo root sets `* text=auto eol=lf`. That is right for the XGBoost JSON in
+# here and wrong for the graphs: git's text heuristic only looks for a NUL byte
+# in the first 8 kB, and a small protobuf can clear that bar, at which point a
+# `0x0D 0x0A` pair occurring inside a weight would be "normalized" to `0x0A` on
+# checkout. These fixtures exist to be *refused*, so a mangled one would still
+# be refused — for the wrong reason, by the parse error rather than by the
+# construct the test is named after, on a machine whose only sin was cloning.
+*.onnx  binary
+*.json  text eol=lf

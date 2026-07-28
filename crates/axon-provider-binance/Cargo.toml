@@ -1,0 +1,30 @@
+[package]
+name = "axon-provider-binance"
+description = "Binance USD-M futures venue adapter (adapter #2): exchangeInfo filters -> instrument grids, combined-stream WS decoders, order/cancel query-string encoding. Offline-verified; never run against Binance."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+axon-core = { workspace = true }
+axon-providers = { workspace = true }
+# Fixed-point money math. Binance sends every price and size as a JSON *string*
+# for the same reason we parse them this way: a float round-trip on 64346.70 is
+# not 64346.70.
+rust_decimal = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+# Async edges only: the WS ingest and the REST reads. Nothing exported from this
+# crate carries a runtime handle into the deterministic core.
+async-trait = { workspace = true }
+tokio = { workspace = true }
+tokio-tungstenite = { workspace = true }
+futures-util = { workspace = true }
+reqwest = { workspace = true }
+
+[dev-dependencies]
+rust_decimal_macros = { workspace = true }
+tokio = { workspace = true, features = ["test-util"] }

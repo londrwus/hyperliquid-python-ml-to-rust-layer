@@ -1,0 +1,23 @@
+[package]
+name = "axon-strategy"
+description = "Axon's inward port: the Rust-side strategy plugin contract, the validating Signal reader, and the planner that turns an accepted target-position Signal into concrete order intents."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+axon-core = { workspace = true }
+axon-contracts = { workspace = true }
+axon-providers = { workspace = true }
+# The SPSC ring the Python producer writes into. The reader owns the `Consumer`
+# end; nothing else in this crate does I/O.
+axon-ipc = { workspace = true }
+# Money math is Decimal, never f64 — the planner needs the crate itself (not just
+# axon-core's re-export) for `ToPrimitive` on the wire-conversion path.
+rust_decimal = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+rust_decimal_macros = { workspace = true }

@@ -1,0 +1,62 @@
+# ── Rust ───────────────────────────────────────────────────────────────
+/target/
+**/target/
+**/*.rs.bk
+*.pdb
+# Cargo.lock IS tracked: this is an application workspace with a binary
+# (axon-runtime), so we want reproducible builds (decided in Phase 1, ADR-0006).
+
+# ── Python ─────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.python-version
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.uv/
+
+# ── ML artifacts / data (do NOT commit models or market data) ───────────
+*.onnx
+*.pt
+*.pth
+*.safetensors
+*.gguf
+*.npz
+/models/
+/data/
+/artifacts/
+*.parquet
+*.feather
+
+# ── Secrets / keys (NEVER commit — signing keys, agent wallets) ─────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+wallets/
+config.local.*
+
+# ── Shared memory / runtime scratch ────────────────────────────────────
+*.shm
+/run/
+*.log
+
+# ── OS / editor ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~

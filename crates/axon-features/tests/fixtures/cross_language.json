@@ -1,0 +1,600 @@
+{
+  "bar_m1_warmup_bars": 21,
+  "features_version": 1,
+  "logs": [
+    {
+      "log": "0xbf688eba2a03fd97",
+      "ratio": "0x3fefe77aafb74921"
+    },
+    {
+      "log": "0xbf2dd14132dc4de0",
+      "ratio": "0x3feffe22f9d0dc77"
+    },
+    {
+      "log": "0xbf5e69b1b1207e2e",
+      "ratio": "0x3feff0cec386470a"
+    },
+    {
+      "log": "0x3f815f3fdd2b2003",
+      "ratio": "0x3ff022e45454ecc8"
+    },
+    {
+      "log": "0xbf7ad9fe220da500",
+      "ratio": "0x3fefca78faa513bf"
+    },
+    {
+      "log": "0x3f628c04582828d8",
+      "ratio": "0x3ff00948b2ab7404"
+    },
+    {
+      "log": "0xbf740fb46628902c",
+      "ratio": "0x3fefd7f9b4061b6a"
+    },
+    {
+      "log": "0x3f7477bbd3d9376d",
+      "ratio": "0x3ff01484d8d5813c"
+    },
+    {
+      "log": "0xbf6f958b83fe76b5",
+      "ratio": "0x3fefe07a05991080"
+    },
+    {
+      "log": "0x3f62beb8b9d45ee7",
+      "ratio": "0x3ff009621ba6582b"
+    },
+    {
+      "log": "0x3f4152d22d04de06",
+      "ratio": "0x3ff0022a7fcaa891"
+    },
+    {
+      "log": "0xbf6fd350dee125f5",
+      "ratio": "0x3fefe03c7d53612f"
+    },
+    {
+      "log": "0x3f79af99633eea9b",
+      "ratio": "0x3ff019c442936655"
+    },
+    {
+      "log": "0xbf6006e07a596558",
+      "ratio": "0x3fefeffd224b2f51"
+    },
+    {
+      "log": "0x3f7173d2680553e6",
+      "ratio": "0x3ff0117d5a91b250"
+    },
+    {
+      "log": "0xbf734da6dc537962",
+      "ratio": "0x3fefd97bf2d1bc16"
+    },
+    {
+      "log": "0xbf605ccf4bceb32f",
+      "ratio": "0x3fefefa75eebfcbf"
+    },
+    {
+      "log": "0xbf5dd2f412f7fd0f",
+      "ratio": "0x3feff119fee58b7f"
+    },
+    {
+      "log": "0xbf3a40601c224a7e",
+      "ratio": "0x3feffcb81f0d3e3a"
+    },
+    {
+      "log": "0x3f76d1611475bdcc",
+      "ratio": "0x3ff016e1ae12bd61"
+    },
+    {
+      "log": "0x3f6916c11f783d9e",
+      "ratio": "0x3ff00c904cc079ce"
+    },
+    {
+      "log": "0xbf8210e15996d7e2",
+      "ratio": "0x3fefb80dd5841a6e"
+    },
+    {
+      "log": "0x3f727df5b9f17bf7",
+      "ratio": "0x3ff01288a97d4aef"
+    },
+    {
+      "log": "0x3f727ed9c0334d0e",
+      "ratio": "0x3ff012898e8bb5cf"
+    },
+    {
+      "log": "0xbf746473e3ca16f6",
+      "ratio": "0x3fefd7510ac99bbe"
+    },
+    {
+      "log": "0xbf6df6e036a0f9f3",
+      "ratio": "0x3fefe21722dce6b8"
+    },
+    {
+      "log": "0x3f59b36451255700",
+      "ratio": "0x3ff0066e238429ce"
+    },
+    {
+      "log": "0xbf586c7d490d61e8",
+      "ratio": "0x3feff3cc15951672"
+    },
+    {
+      "log": "0x3f100d17cec5435a",
+      "ratio": "0x3ff0004034e00d94"
+    },
+    {
+      "log": "0x3f82c40a05485f89",
+      "ratio": "0x3ff025b43b7b1116"
+    },
+    {
+      "log": "0xbf730fdd3a4f454a",
+      "ratio": "0x3fefd9f6f2466eb6"
+    },
+    {
+      "log": "0x3f6600f203ada980",
+      "ratio": "0x3ff00b04423321fe"
+    }
+  ],
+  "negative_zero": [
+    {
+      "all_negzero_mean": "0x0000000000000000",
+      "all_negzero_std": "0x0000000000000000",
+      "all_negzero_sum": "0x0000000000000000",
+      "mixed_zero_sum": "0x0000000000000000",
+      "n": 1
+    },
+    {
+      "all_negzero_mean": "0x0000000000000000",
+      "all_negzero_std": "0x0000000000000000",
+      "all_negzero_sum": "0x0000000000000000",
+      "mixed_zero_sum": "0x0000000000000000",
+      "n": 7
+    },
+    {
+      "all_negzero_mean": "0x0000000000000000",
+      "all_negzero_std": "0x0000000000000000",
+      "all_negzero_sum": "0x0000000000000000",
+      "mixed_zero_sum": "0x0000000000000000",
+      "n": 8
+    },
+    {
+      "all_negzero_mean": "0x0000000000000000",
+      "all_negzero_std": "0x0000000000000000",
+      "all_negzero_sum": "0x0000000000000000",
+      "mixed_zero_sum": "0x0000000000000000",
+      "n": 9
+    },
+    {
+      "all_negzero_mean": "0x0000000000000000",
+      "all_negzero_std": "0x0000000000000000",
+      "all_negzero_sum": "0x0000000000000000",
+      "mixed_zero_sum": "0x0000000000000000",
+      "n": 20
+    },
+    {
+      "all_negzero_mean": "0x0000000000000000",
+      "all_negzero_std": "0x0000000000000000",
+      "all_negzero_sum": "0x0000000000000000",
+      "mixed_zero_sum": "0x0000000000000000",
+      "n": 129
+    },
+    {
+      "all_negzero_mean": "0x0000000000000000",
+      "all_negzero_std": "0x0000000000000000",
+      "all_negzero_sum": "0x0000000000000000",
+      "mixed_zero_sum": "0x0000000000000000",
+      "n": 300
+    }
+  ],
+  "note": "Written by crates/axon-features/tests/fixtures/generate.py. Regenerating rewrites a frozen reference; the git diff IS the review.",
+  "producer": {
+    "numpy": "2.5.1",
+    "python": "3.12.13"
+  },
+  "reductions": [
+    {
+      "mean": "0x40ed4c84ee9405bd",
+      "naive_separates": false,
+      "naive_sum": "0x41124fd3151c8396",
+      "std_ddof0": "0x406496c350c87e74",
+      "std_ddof1": "0x406704e46263d976",
+      "sum": "0x41124fd3151c8396",
+      "window": 5
+    },
+    {
+      "mean": "0x40ed48172ca2e887",
+      "naive_separates": false,
+      "naive_sum": "0x41199f14470e8b76",
+      "std_ddof0": "0x4065f9bad1c9c62e",
+      "std_ddof1": "0x4067bc7b8e43f771",
+      "sum": "0x41199f14470e8b76",
+      "window": 7
+    },
+    {
+      "mean": "0x40ed462c5de0eddf",
+      "naive_separates": true,
+      "naive_sum": "0x411d462c5de0ede0",
+      "std_ddof0": "0x40652c3cd565fd90",
+      "std_ddof1": "0x4066a27a4eaebe9c",
+      "sum": "0x411d462c5de0eddf",
+      "window": 8
+    },
+    {
+      "mean": "0x40ed4ad6f9b9b12b",
+      "naive_separates": false,
+      "naive_sum": "0x41324ec65c140ebb",
+      "std_ddof0": "0x40677beac755d74e",
+      "std_ddof1": "0x40681818c81ac35e",
+      "sum": "0x41324ec65c140ebb",
+      "window": 20
+    },
+    {
+      "mean": "0x40ed4933d639c8f9",
+      "naive_separates": true,
+      "naive_sum": "0x413d4933d639c8f7",
+      "std_ddof0": "0x4066506f40672495",
+      "std_ddof1": "0x4066abd6de8fdc29",
+      "sum": "0x413d4933d639c8f9",
+      "window": 32
+    },
+    {
+      "mean": "0x40ed4d1b0d33035a",
+      "naive_separates": true,
+      "naive_sum": "0x415d4d1b0d330357",
+      "std_ddof0": "0x4065b98bd58407c5",
+      "std_ddof1": "0x4065cf662e5ae1be",
+      "sum": "0x415d4d1b0d33035a",
+      "window": 128
+    },
+    {
+      "mean": "0x40ed4d1d67736cb2",
+      "naive_separates": true,
+      "naive_sum": "0x415d87b7a2425387",
+      "std_ddof0": "0x4065a40308309e56",
+      "std_ddof1": "0x4065b99c43fbd8b1",
+      "sum": "0x415d87b7a242538b",
+      "window": 129
+    }
+  ],
+  "registry": {
+    "book_imbalance": {
+      "inputs": [
+        "bid_sz",
+        "ask_sz"
+      ],
+      "params": []
+    },
+    "close_location": {
+      "inputs": [
+        "high",
+        "low",
+        "close"
+      ],
+      "params": []
+    },
+    "ema": {
+      "inputs": [
+        "x"
+      ],
+      "params": [
+        "span"
+      ]
+    },
+    "ema_crossover": {
+      "inputs": [
+        "price"
+      ],
+      "params": [
+        "fast",
+        "slow"
+      ]
+    },
+    "log_return": {
+      "inputs": [
+        "price"
+      ],
+      "params": [
+        "period"
+      ]
+    },
+    "mid_price": {
+      "inputs": [
+        "bid_px",
+        "ask_px"
+      ],
+      "params": []
+    },
+    "momentum": {
+      "inputs": [
+        "price"
+      ],
+      "params": [
+        "window"
+      ]
+    },
+    "realized_volatility": {
+      "inputs": [
+        "price"
+      ],
+      "params": [
+        "window"
+      ]
+    },
+    "relative_range": {
+      "inputs": [
+        "high",
+        "low",
+        "close"
+      ],
+      "params": []
+    },
+    "relative_spread": {
+      "inputs": [
+        "bid_px",
+        "ask_px"
+      ],
+      "params": []
+    },
+    "rolling_mean": {
+      "inputs": [
+        "x"
+      ],
+      "params": [
+        "window"
+      ]
+    },
+    "rolling_std": {
+      "inputs": [
+        "x"
+      ],
+      "params": [
+        "ddof",
+        "window"
+      ]
+    },
+    "rolling_sum": {
+      "inputs": [
+        "x"
+      ],
+      "params": [
+        "window"
+      ]
+    },
+    "rolling_zscore": {
+      "inputs": [
+        "x"
+      ],
+      "params": [
+        "ddof",
+        "window"
+      ]
+    },
+    "sma_crossover": {
+      "inputs": [
+        "price"
+      ],
+      "params": [
+        "fast",
+        "slow"
+      ]
+    },
+    "spread": {
+      "inputs": [
+        "bid_px",
+        "ask_px"
+      ],
+      "params": []
+    },
+    "trade_flow_imbalance": {
+      "inputs": [
+        "trade_sz",
+        "trade_sign"
+      ],
+      "params": [
+        "window"
+      ]
+    }
+  },
+  "series": [
+    "0x40ed576bc36a5492",
+    "0x40ed40eff5a2a6d8",
+    "0x40ed3f3be0027c7d",
+    "0x40ed31593bd7fbe4",
+    "0x40ed7102b28cc335",
+    "0x40ed3fc34c64592f",
+    "0x40ed50bc0fccf3a3",
+    "0x40ed2c115ffbca17",
+    "0x40ed517aac9b4d88",
+    "0x40ed3498fdb35c26",
+    "0x40ed45b9a86387c4",
+    "0x40ed49b0206c2490",
+    "0x40ed2c9dcd2a1d48",
+    "0x40ed5b995fac8fca",
+    "0x40ed4ce8f1dca598",
+    "0x40ed6cf03814ef6e",
+    "0x40ed49856d54a298",
+    "0x40ed3a8f8d02d362",
+    "0x40ed2cf3d84b5e26",
+    "0x40ed29f6189a0fa4",
+    "0x40ed53ab265b1a20",
+    "0x40ed6ab2646a6fe6",
+    "0x40ed288f0aa89d0e",
+    "0x40ed4a55b93531a6",
+    "0x40ed6c452b170abd",
+    "0x40ed46dcf6721f2d",
+    "0x40ed2b7fb21f4a5c",
+    "0x40ed3738cdd0191a",
+    "0x40ed2c14b27af784",
+    "0x40ed2c89c3358697",
+    "0x40ed7149634b6803",
+    "0x40ed4e4a87a8181c",
+    "0x40ed627827b898d6",
+    "0x40ed375ff9fe0e85",
+    "0x40ed353c62c1c71a",
+    "0x40ed53c565951d50",
+    "0x40ed36552725e0b6",
+    "0x40ed42741d8bbee3",
+    "0x40ed2a74a38cb87c",
+    "0x40ed31f2822824e4",
+    "0x40ed5651ac319caf",
+    "0x40ed575361c2f39a",
+    "0x40ed66ede4cde05f",
+    "0x40ed2e3ed7da8139",
+    "0x40ed29639e2e70f2",
+    "0x40ed38ef0cec12ac",
+    "0x40ed661bb13dd40a",
+    "0x40ed37a376a624d0",
+    "0x40ed48e1658bee78",
+    "0x40ed4c43f50ab04e",
+    "0x40ed4db3eba324b8",
+    "0x40ed6891230f97bb",
+    "0x40ed5f1a9dbb675d",
+    "0x40ed6592a0b87c46",
+    "0x40ed5e149823b24c",
+    "0x40ed710cf3714fa4",
+    "0x40ed3428320ea2ac",
+    "0x40ed340b26f8ae63",
+    "0x40ed4e3b8e905475",
+    "0x40ed6f7f52867a38",
+    "0x40ed6636cbcb6a66",
+    "0x40ed705fdae12ec5",
+    "0x40ed2cee79c3d856",
+    "0x40ed5a472ea5ae7a",
+    "0x40ed5705cf85e46a",
+    "0x40ed5a11ed6a2964",
+    "0x40ed3435c526bccf",
+    "0x40ed41f4c8fb2a50",
+    "0x40ed569476fe7895",
+    "0x40ed38a36d09daf5",
+    "0x40ed55a90160bf0f",
+    "0x40ed59fcdd92fe5a",
+    "0x40ed53dd85c47439",
+    "0x40ed48ec7bbbf02f",
+    "0x40ed6083b2b3ecf5",
+    "0x40ed6345942692cf",
+    "0x40ed6a89c11e64c8",
+    "0x40ed5b6593208700",
+    "0x40ed2e6bfd225279",
+    "0x40ed564e38f30501",
+    "0x40ed471651320945",
+    "0x40ed4f7aef59843b",
+    "0x40ed70a81f0b3315",
+    "0x40ed430cea37bdc6",
+    "0x40ed640e90717be7",
+    "0x40ed3a4b883c3ecd",
+    "0x40ed5bd618ced7f2",
+    "0x40ed52b6b4430dd2",
+    "0x40ed2bc79f679300",
+    "0x40ed4cb96c443c87",
+    "0x40ed6afe0d2c0f4e",
+    "0x40ed5150e9d655db",
+    "0x40ed50be526c3200",
+    "0x40ed42d58210a306",
+    "0x40ed4704f798495a",
+    "0x40ed4782e16904fe",
+    "0x40ed6e20aa80193f",
+    "0x40ed3ff33123d240",
+    "0x40ed6e6cc3ee8a92",
+    "0x40ed3e8d3bf248c8",
+    "0x40ed3922c3d874d8",
+    "0x40ed456e89521cd3",
+    "0x40ed5400a059f334",
+    "0x40ed3d07b8f966da",
+    "0x40ed5bc40de2b8bf",
+    "0x40ed6105a7ec7d0b",
+    "0x40ed28de50b21f7b",
+    "0x40ed61769f1d2107",
+    "0x40ed3a54f70301e9",
+    "0x40ed6a9f750d3c41",
+    "0x40ed3bcec931e3ac",
+    "0x40ed6bd28df7f964",
+    "0x40ed5dd957dffa1d",
+    "0x40ed419aa4b9850c",
+    "0x40ed2b7def17a311",
+    "0x40ed4314617a6cae",
+    "0x40ed6d5b26f0ddd4",
+    "0x40ed4481af328761",
+    "0x40ed6e775ba97895",
+    "0x40ed26fb34ca05f7",
+    "0x40ed5dd5058a813d",
+    "0x40ed31a27b25f098",
+    "0x40ed652612125b77",
+    "0x40ed37d4737d477f",
+    "0x40ed4fa8e608cb3f",
+    "0x40ed40a3846ec009",
+    "0x40ed48c6b8a01a55",
+    "0x40ed707d9b458933",
+    "0x40ed4a0e48b8d321",
+    "0x40ed31884e2fb393",
+    "0x40ed2aa329183293",
+    "0x40ed4eee7da9de25",
+    "0x40ed6cbc15fe5f24",
+    "0x40ed357143d66658",
+    "0x40ed5168e1e2f1c2",
+    "0x40ed3681de558f10",
+    "0x40ed53eeda1bb034",
+    "0x40ed42345a8c8683",
+    "0x40ed6348a6ecb2a2",
+    "0x40ed3503116a80a1",
+    "0x40ed300ded261090",
+    "0x40ed527b66f1fdd5",
+    "0x40ed5814adcc26e7",
+    "0x40ed70a9d390b128",
+    "0x40ed682171ca40fb",
+    "0x40ed6a22b24a4b52",
+    "0x40ed624c256e3abb",
+    "0x40ed2907dbb899e7",
+    "0x40ed4b4411ab61d7",
+    "0x40ed3eb1cb575b50",
+    "0x40ed281a566bf6c9",
+    "0x40ed4c78655b6d24",
+    "0x40ed38c0b6931345",
+    "0x40ed27990d9fa5c0",
+    "0x40ed527081f0993f",
+    "0x40ed6e5042e2a2ac",
+    "0x40ed2e645c6c012c",
+    "0x40ed456a7f33016a",
+    "0x40ed4ba4c09dae09",
+    "0x40ed50d4c9c4c96c"
+  ],
+  "specs": {
+    "bar_m1": {
+      "columns": [
+        "ret_1",
+        "mom_5",
+        "z_20",
+        "vol_20",
+        "range_bps",
+        "clv"
+      ],
+      "fingerprint": "c503688de24e863f",
+      "json": "{\"features\":[{\"column\":\"ret_1\",\"feature\":\"log_return\",\"inputs\":{\"price\":\"close\"},\"params\":{\"period\":1}},{\"column\":\"mom_5\",\"feature\":\"momentum\",\"inputs\":{\"price\":\"close\"},\"params\":{\"window\":5}},{\"column\":\"z_20\",\"feature\":\"rolling_zscore\",\"inputs\":{\"x\":\"close\"},\"params\":{\"window\":20}},{\"column\":\"vol_20\",\"feature\":\"realized_volatility\",\"inputs\":{\"price\":\"close\"},\"params\":{\"window\":20}},{\"column\":\"range_bps\",\"feature\":\"relative_range\",\"inputs\":{},\"params\":{}},{\"column\":\"clv\",\"feature\":\"close_location\",\"inputs\":{},\"params\":{}}],\"fingerprint\":\"c503688de24e863f\",\"library_version\":1,\"spec\":\"bar_m1\",\"version\":1}",
+      "ref": "bar_m1/v1#c503688de24e863f",
+      "required_inputs": [
+        "close",
+        "high",
+        "low"
+      ]
+    },
+    "perp_core": {
+      "columns": [
+        "mid",
+        "spread_bps",
+        "book_imb",
+        "ret_1",
+        "mom_32",
+        "vol_32",
+        "ema_x_8_32",
+        "z_32",
+        "tfi_32"
+      ],
+      "fingerprint": "868d3dbe95d4b386",
+      "json": "{\"features\":[{\"column\":\"mid\",\"feature\":\"mid_price\",\"inputs\":{},\"params\":{}},{\"column\":\"spread_bps\",\"feature\":\"relative_spread\",\"inputs\":{},\"params\":{}},{\"column\":\"book_imb\",\"feature\":\"book_imbalance\",\"inputs\":{},\"params\":{}},{\"column\":\"ret_1\",\"feature\":\"log_return\",\"inputs\":{\"price\":\"mid\"},\"params\":{\"period\":1}},{\"column\":\"mom_32\",\"feature\":\"momentum\",\"inputs\":{\"price\":\"mid\"},\"params\":{\"window\":32}},{\"column\":\"vol_32\",\"feature\":\"realized_volatility\",\"inputs\":{\"price\":\"mid\"},\"params\":{\"window\":32}},{\"column\":\"ema_x_8_32\",\"feature\":\"ema_crossover\",\"inputs\":{\"price\":\"mid\"},\"params\":{\"fast\":8,\"slow\":32}},{\"column\":\"z_32\",\"feature\":\"rolling_zscore\",\"inputs\":{\"x\":\"mid\"},\"params\":{\"window\":32}},{\"column\":\"tfi_32\",\"feature\":\"trade_flow_imbalance\",\"inputs\":{},\"params\":{\"window\":32}}],\"fingerprint\":\"868d3dbe95d4b386\",\"library_version\":1,\"spec\":\"perp_core\",\"version\":1}",
+      "ref": "perp_core/v1#868d3dbe95d4b386",
+      "required_inputs": [
+        "ask_px",
+        "ask_sz",
+        "bid_px",
+        "bid_sz",
+        "trade_sign",
+        "trade_sz"
+      ]
+    }
+  }
+}

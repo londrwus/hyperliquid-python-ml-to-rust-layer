@@ -1,0 +1,566 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Axon shared contract — THE single source of truth for the Python↔Rust boundary.
+#
+# Both languages derive their layout from THIS file and only this file:
+#   • Rust  (crates/axon-contracts/build.rs) generates offset/size constants at
+#     build time; the `#[repr(C)]` structs then assert (at COMPILE time, via
+#     `core::mem::offset_of!`) that every field sits exactly where this file says.
+#     A drift is a Rust compile error.
+#   • Python (python/axon/contracts) parses this file at import time with `tomllib`
+#     and builds a matching NumPy structured dtype. A drift is a failed import/test.
+#   • A cross-language round-trip test (Python writes → ring → Rust reads, and the
+#     reverse) is the final backstop.
+#
+# RULES (see docs/07-parity-and-testing.md, contracts/README.md):
+#   • Fixed-layout, little-endian, zero implicit padding. Fields are ordered by
+#     descending alignment and padded EXPLICITLY so the C layout is unambiguous.
+#   • Event-time everywhere: `ts_event` is the event's own nanosecond timestamp,
+#     never wall-clock at receipt (required for deterministic replay).
+#   • Fixed-point, never float, for price/size/quantity.
+#   • Versioned: bump `schema_version`; readers reject unknown versions loudly.
+#     Each record owns its version, so bumping one record's layout cannot change
+#     the version byte another record stamps on the wire.
+#   • Changes here are ADR-worthy (the Signal shape is foundational — ADR-0006;
+#     the MdSlice record and the ring's record-kind tag — ADR-0012; the MdBar
+#     record and MdSlice's mark/funding tail — ADR-0028).
+#
+# TARGET PLATFORM ASSUMPTION: x86_64, little-endian (Windows dev + Linux/WSL2
+# prod). ARM would additionally require explicit memory fences on the Python
+# producer path — see docs and axon-ipc for the ordering contract.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# `schema_version` is the Signal record's layout version. It predates the second
+# record and stays where it is: moving it under `[signal]` would change nothing on
+# the wire but would break every reader that already reads it from the top level.
+# MdSlice and MdBar carry their own.
+#
+# Bumped 1 → 2 when `max_order_age_ms` was carved out of `reserved` (ADR-0031): a v1
+# reader refuses non-zero reserved bytes, so a v2 producer's records are rejected
+# wholesale by one — correctly, and that refusal is exactly why the bump is not
+# optional. It is independent of `[md_slice] schema_version`, which also reads 2 for
+# entirely unrelated reasons (ADR-0028); that the two happen to share a number is the
+# per-record versioning working, not a coupling.
+#
+# Bumped 2 → 3 for `ts_cause`, and **that field is the last of `reserved`** — the record
+# is now fully spent and the next field to be added has to re-cut the 64-byte layout
+# rather than extend it.
+#
+# Why it had to be on the wire. The largest latency in this system is the gap between an
+# m1 bar's own close and the strategy acting on it: measured 951 / 12 051 / 111 475 ms
+# (min / median / max) over 57 live bars on 2026-07-27. It had no ceiling and could not
+# have one, because a record carried only the moment the *producer decided* — so from the
+# runtime's side a decision one second after a bar and a decision two minutes after one
+# are the same record, and a number nobody can measure is a number that cannot regress.
+# The alternative considered and rejected was inferring the bar's close from `ts_event`
+# by rounding down to the bar interval: it would be a guess about the producer's cadence,
+# wrong for every strategy that is not on bars, and silently wrong rather than absent.
+schema_version = 3
+endianness = "little"
+
+# ─── Fixed-point scale ───────────────────────────────────────────────────────
+# Quantities and prices cross the boundary as signed integers in units of
+# 10^-FIXED_POINT_DECIMALS. Per-symbol tick/lot precision is resolved in the
+# venue adapter's SymbolMap; this global scale is the canonical wire encoding.
+# 1e-8 comfortably covers crypto perp/spot precision.
+[fixed_point]
+decimals = 8          # value_on_wire = round(real_value * 10^8)
+scale = 100000000     # 10^8, provided explicitly for non-computing readers
+
+# ─── The Signal record (target-position; ADR-0006) ───────────────────────────
+# 64 bytes = exactly one cache line. `kind` + `reserved` leave room to add an
+# explicit-order-intent variant later without changing the record stride.
+[signal]
+name = "Signal"
+size = 64             # total record stride in bytes (one cache line)
+align = 8
+
+# kind discriminant values (the `kind` field below)
+[signal.kinds]
+target_position = 0   # canonical default (ADR-0006); Rust owns *how* to reach target
+# order_intent  = 1   # reserved for the future explicit-intent variant
+
+# flags bitfield values (the `flags` field below)
+[signal.flags]
+reduce_only = 1       # 1 << 0 : order may only shrink, never flip/grow a position
+close       = 2       # 1 << 1 : flatten the position (target_qty ignored)
+# bits 2..15 reserved
+
+# Field table. `offset`/`size` are authoritative and asserted on both sides.
+# Order is by descending alignment then declaration, chosen so there is ZERO
+# implicit padding: every field is naturally aligned and the fields tile [0,64).
+[[signal.fields]]
+name = "seq"            # u64  monotonic sequence number (gap detection + replay)
+type = "u64"
+offset = 0
+size = 8
+
+[[signal.fields]]
+name = "ts_event"       # i64  event-time nanoseconds (NOT processing time)
+type = "i64"
+offset = 8
+size = 8
+
+[[signal.fields]]
+name = "target_qty"     # i64  fixed-point signed target position (10^-8 units)
+type = "i64"
+offset = 16
+size = 8
+
+[[signal.fields]]
+name = "price_band"     # i64  worst-acceptable price (fixed-point); 0 = none
+type = "i64"
+offset = 24
+size = 8
+
+[[signal.fields]]
+name = "symbol_id"      # u32  canonical symbol id (via the venue SymbolMap)
+type = "u32"
+offset = 32
+size = 4
+
+[[signal.fields]]
+name = "ttl_ms"         # u32  signal validity window in ms; 0 = defer to the reader's ceiling
+type = "u32"
+offset = 36
+size = 4
+
+[[signal.fields]]
+name = "model_version"  # u32  which model produced this signal (audit/replay)
+type = "u32"
+offset = 40
+size = 4
+
+[[signal.fields]]
+name = "flags"          # u16  bitfield (see [signal.flags])
+type = "u16"
+offset = 44
+size = 2
+
+[[signal.fields]]
+name = "schema_version" # u8   layout version guard; readers reject unknown values
+type = "u8"
+offset = 46
+size = 1
+
+[[signal.fields]]
+name = "urgency"        # u8   execution aggressiveness hint (0 = most passive)
+type = "u8"
+offset = 47
+size = 1
+
+[[signal.fields]]
+name = "kind"           # u8   record kind discriminant (see [signal.kinds])
+type = "u8"
+offset = 48
+size = 1
+
+[[signal.fields]]
+name = "pad0"           # explicit padding to the next 4-byte boundary; MUST be zeroed.
+type = "u8[3]"          #      Spelled out because this file has no implicit padding and
+offset = 49             #      `max_order_age_ms` is a u32 that must sit at 52.
+size = 3
+
+[[signal.fields]]
+name = "max_order_age_ms" # u32  how long an order this signal places may keep its place,
+type = "u32"              #      in ms; 0 = defer to the operator's ceiling. NOT `ttl_ms`:
+offset = 52               #      that is a signal-ADMISSION window the reader consumes
+size = 4                  #      before the planner ever sees the record, and nothing in
+                          #      it has ever applied to an order already at the venue.
+
+[[signal.fields]]
+name = "ts_cause"       # i64  event-time ns of the observation this decision answers —
+type = "i64"            #      an m1 bar's own CLOSE, not its arrival. 0 = not stated.
+offset = 56             #      This spends the last of `reserved`; see the note above the
+size = 8                #      version bump for why it had to be on the wire at all.
+
+# ─── The MdSlice record (market data, Rust→Python; ADR-0012) ─────────────────
+# The reverse direction of the boundary: the Rust core publishes the slice of
+# market state a Python feature computation needs, so Python never has to hold a
+# second venue connection (two connections = two views of the book, and the
+# features would then be computed on data the executing core never saw).
+#
+# 128 bytes = two cache lines. It does not fit in one — nine 8-byte quantities are
+# 72 bytes before the ids — and a non-power-of-two stride would make every other
+# record straddle a cache line for no gain.
+#
+# v2 (ADR-0028) SPENDS the 48 reserved bytes on exactly what ADR-0012 held them for:
+# the venue's mark, the external index it tracks, and funding. The stride did not
+# change, which is the whole point of having reserved them.
+#
+# Why mark/funding is a *tail on this record* and not a record of its own: a ticker
+# has no event of its own that could stamp one. Hyperliquid's `activeAssetCtx`
+# carries no venue timestamp (ADR-0011), so an `MdTicker` record's `ts_event` could
+# only ever be our receipt clock — and a record ordered on the machine's clock does
+# not reproduce on replay, which is precisely why the publisher refuses to emit a
+# slice on a Ticker at all. Mark and funding are *state*, like the top of book; they
+# ride the next slice a venue-timed event triggers, carrying their own two clocks so
+# a consumer can tell how stale they are and which clock measured it.
+[md_slice]
+name = "MdSlice"
+size = 128            # total record stride in bytes (two cache lines)
+align = 8
+schema_version = 2    # independent of `signal`'s — see the top-level note
+
+# kind discriminant values (the `kind` field below): what CAUSED this update.
+# Every slice carries the full current state; `kind` says which part just moved,
+# which is what event-driven features (quote-flicker vs. trade-arrival) key on.
+[md_slice.kinds]
+quote    = 0          # a BBO change
+trade    = 1          # a trade print
+snapshot = 2          # a full book refresh (venue re-sends the top-N book)
+
+# flags bitfield values (the `flags` field below)
+[md_slice.flags]
+last_trade_sell = 1   # 1 << 0 : the last print's AGGRESSOR was the seller
+# bits 1..15 reserved
+
+# Fields tile [0,128) with zero implicit padding, ordered by descending alignment.
+[[md_slice.fields]]
+name = "seq"            # u64  monotonic sequence number (gap detection + replay)
+type = "u64"
+offset = 0
+size = 8
+
+[[md_slice.fields]]
+name = "ts_event"       # i64  event-time nanoseconds of THIS update (not receipt)
+type = "i64"
+offset = 8
+size = 8
+
+[[md_slice.fields]]
+name = "bid_px"         # i64  best bid price (fixed-point)
+type = "i64"
+offset = 16
+size = 8
+
+[[md_slice.fields]]
+name = "bid_sz"         # i64  size resting at the best bid (fixed-point)
+type = "i64"
+offset = 24
+size = 8
+
+[[md_slice.fields]]
+name = "ask_px"         # i64  best ask price (fixed-point)
+type = "i64"
+offset = 32
+size = 8
+
+[[md_slice.fields]]
+name = "ask_sz"         # i64  size resting at the best ask (fixed-point)
+type = "i64"
+offset = 40
+size = 8
+
+[[md_slice.fields]]
+name = "last_trade_px"  # i64  price of the last print (fixed-point); 0 = none yet
+type = "i64"
+offset = 48
+size = 8
+
+[[md_slice.fields]]
+name = "last_trade_sz"  # i64  size of the last print (fixed-point); 0 = none yet
+type = "i64"
+offset = 56
+size = 8
+
+[[md_slice.fields]]
+name = "last_trade_ts"  # i64  the last print's OWN event time; 0 = none yet.
+type = "i64"            #      Separate from ts_event so a feature can measure how
+offset = 64             #      stale the print is when a quote-driven slice arrives.
+size = 8
+
+[[md_slice.fields]]
+name = "symbol_id"      # u32  canonical symbol id (via the venue SymbolMap)
+type = "u32"
+offset = 72
+size = 4
+
+[[md_slice.fields]]
+name = "flags"          # u16  bitfield (see [md_slice.flags])
+type = "u16"
+offset = 76
+size = 2
+
+[[md_slice.fields]]
+name = "schema_version" # u8   layout version guard; readers reject unknown values
+type = "u8"
+offset = 78
+size = 1
+
+[[md_slice.fields]]
+name = "kind"           # u8   update-cause discriminant (see [md_slice.kinds])
+type = "u8"
+offset = 79
+size = 1
+
+# ── the ticker tail (v2, ADR-0028) ───────────────────────────────────────────
+# Six i64s, tiling [80,128). They sit AFTER the small ids rather than in
+# descending-alignment order because moving `symbol_id`/`flags`/`schema_version`/
+# `kind` would shift every offset a v1 reader knows, for no layout gain: 80 is
+# already 8-aligned, so there is still zero implicit padding.
+#
+# All six are zero when no Ticker has been seen for the instrument. A consumer
+# reads `mark_ts_ingest == 0` as "no ticker yet" — never `mark_px == 0`, which is
+# also what a hypothetical zero mark would look like.
+
+[[md_slice.fields]]
+name = "mark_px"        # i64  the venue's mark (fixed-point); 0 = no ticker yet.
+type = "i64"            #      What margin, liquidation and unrealized PnL are
+offset = 80             #      computed against — NOT the mid and not the last print.
+size = 8
+
+[[md_slice.fields]]
+name = "index_px"       # i64  the external spot reference the venue tracks (Hyperliquid
+type = "i64"            #      calls it the oracle price); 0 = none. Kept because
+offset = 88             #      `mark_px - index_px` is the basis, which is what separates
+size = 8                #      a mark dragged by a local squeeze from one tracking spot.
+
+[[md_slice.fields]]
+name = "funding_rate"   # i64  fraction of notional charged once per
+type = "i64"            #      `funding_interval_ns` (fixed-point). Positive = longs pay.
+offset = 96             #      Stored exactly as the venue published it, never rescaled
+size = 8                #      to a common period, so accrued funding still reconciles.
+
+[[md_slice.fields]]
+name = "funding_interval_ns"  # i64  nanoseconds between funding charges; 0 = does not
+type = "i64"                  #      fund, or unknown. Travels WITH the rate because
+offset = 104                  #      either alone is a wrong number: venues disagree on
+size = 8                      #      the period (Hyperliquid hourly, most CEXes 8-hourly)
+                              #      and each publishes its rate with no unit attached.
+
+[[md_slice.fields]]
+name = "mark_ts_venue"  # i64  the ticker's OWN venue event time; 0 = the venue stamped
+type = "i64"            #      none. When non-zero it is on the same clock as `ts_event`,
+offset = 112            #      so `ts_event - mark_ts_venue` is the mark's age and it
+size = 8                #      replays. When zero, no reproducible age exists (ADR-0011).
+
+[[md_slice.fields]]
+name = "mark_ts_ingest" # i64  when THIS process received the ticker; 0 = none seen yet.
+type = "i64"            #      Kept beside `mark_ts_venue` rather than folded into it:
+offset = 120            #      the pair is what distinguishes "no ticker" from "a ticker
+size = 8                #      the venue did not timestamp", and where both exist their
+                        #      difference is the feed latency (docs/05-latency-model.md).
+
+# ─── The MdBar record (closed OHLCV bars, Rust→Python; ADR-0028) ─────────────
+# A SECOND market-data record, on its own ring, because a bar is not a state
+# snapshot. `MdSlice` answers "what is true now"; a bar answers "what happened
+# over a closed interval". Three consequences follow that a variant inside
+# `MdSlice` could not have:
+#
+#   • Two consecutive bars with identical OHLCV are two facts, not a repeat, so
+#     `MdWritePolicy::OnChange` must NOT coalesce them — one deleted bar silently
+#     shortens every rolling feature window downstream. A bar riding `MdSlice`
+#     would be subject to a change test written for state.
+#   • `MdSlice.kind` is documented as the *cause* of an update, never the record's
+#     type (ADR-0012 §2). Adding `bar` there would make one field mean two things.
+#   • A bar has no top of book and a slice has no OHLCV, so a union of the two
+#     would be half-zeroed on every record either way.
+#
+# It is 128 bytes — the SAME stride as `MdSlice`. That is deliberate, and it is the
+# case ADR-0012 §3 built the ring header's `record_kind` for: `record_size` cannot
+# tell these two apart, so the kind tag is now load-bearing rather than
+# belt-and-braces. Map one onto the other and `open()` fails by name; without the
+# tag a reader would report `bid_px` as an open price and keep going.
+[md_bar]
+name = "MdBar"
+size = 128            # two cache lines, matching MdSlice — see above
+align = 8
+schema_version = 1
+
+# kind discriminant values (the `kind` field below).
+#
+# There is exactly one value, and there is deliberately **no finality bit anywhere
+# on this record**. Only closed bars are ever published, and that is enforced by the
+# publisher rather than assumed of the venue: it holds each instrument+interval's
+# latest frame and emits it only when a frame for the NEXT interval arrives, so an
+# in-progress frame is structurally unpublishable. That matters because a venue's
+# own frames cannot be trusted to say — 111 of 112 measured Binance `kline_1m`
+# frames were in progress and every one carried the same close stamp, so the last
+# partial and the close are indistinguishable by timestamp, and `axon_core::Candle`
+# has no `is_final` to ask. A bit here would be a field a reader might rely on and a
+# publisher could only guess at.
+#
+# The field itself stays, so a later variant (a venue that *revises* a printed bar,
+# say) needs no stride change. It will never be given to a bar that is still forming.
+[md_bar.kinds]
+closed = 0
+
+# flags bitfield values (the `flags` field below).
+# Both say something about *continuity*, which no other field on the record can:
+# a `seq` gap means the ring dropped, which is a different fault entirely.
+[md_bar.flags]
+gap_before = 1        # 1 << 0 : the venue should have printed a bar between this one
+                      #          and the previous one for this instrument+interval and
+                      #          did not. A rolling feature computed across it is wrong,
+                      #          and nothing else on the wire would say so.
+first_bar  = 2        # 1 << 1 : no previous bar for this instrument+interval in this
+                      #          session, so continuity is UNKNOWN rather than broken.
+                      #          Distinct from `gap_before` because flagging a session's
+                      #          first bar as a gap would be a lie, and not flagging it
+                      #          would let a window start mid-history in silence.
+# bits 2..15 reserved
+
+# Fields tile [0,128) with zero implicit padding, ordered by descending alignment.
+[[md_bar.fields]]
+name = "seq"            # u64  monotonic sequence number (gap detection + replay).
+type = "u64"            #      Its own sequence, independent of the slice ring's.
+offset = 0
+size = 8
+
+[[md_bar.fields]]
+name = "ts_event"       # i64  the bar's CLOSE time in nanoseconds — `T + 1 ms`, where
+type = "i64"            #      `T` is the venue's last-millisecond-of-the-bar. Not `T`:
+offset = 8              #      a bar stamped `T` sorts EQUAL to the trades printed inside
+size = 8                #      its own final millisecond, so an event-time sort may hand a
+                        #      strategy the closed bar before the tick that closed it.
+                        #      `axon.strategies.data.CLOSE_STAMP_OFFSET_MS` and
+                        #      `decode_candle` already agree on this; a disagreement makes
+                        #      `align_by_event_time` intersect to EMPTY and the parity gate
+                        #      then fails as "an empty matrix proves nothing".
+
+[[md_bar.fields]]
+name = "open_time"      # i64  the bar's own open time in nanoseconds. Carried as well as
+type = "i64"            #      `ts_event` so a consumer can check interval alignment and
+offset = 16             #      detect a hole arithmetically instead of trusting the flag.
+size = 8
+
+[[md_bar.fields]]
+name = "open"           # i64  first traded price in the interval (fixed-point)
+type = "i64"
+offset = 24
+size = 8
+
+[[md_bar.fields]]
+name = "high"           # i64  highest traded price in the interval (fixed-point)
+type = "i64"
+offset = 32
+size = 8
+
+[[md_bar.fields]]
+name = "low"            # i64  lowest traded price in the interval (fixed-point)
+type = "i64"
+offset = 40
+size = 8
+
+[[md_bar.fields]]
+name = "close"          # i64  last traded price in the interval (fixed-point)
+type = "i64"
+offset = 48
+size = 8
+
+[[md_bar.fields]]
+name = "volume"         # i64  base-unit volume traded in the interval (fixed-point)
+type = "i64"
+offset = 56
+size = 8
+
+[[md_bar.fields]]
+name = "symbol_id"      # u32  canonical symbol id (via the venue SymbolMap)
+type = "u32"
+offset = 64
+size = 4
+
+[[md_bar.fields]]
+name = "interval_ms"    # u32  bar length in milliseconds (60_000 for 1m, …), never an
+type = "u32"            #      enum ordinal: a number is self-describing across languages
+offset = 68             #      and lets a consumer compute the next expected `open_time`
+size = 4                #      without a lookup table. u32 ms tops out at 49 days, which
+                        #      covers every interval any venue quotes.
+
+[[md_bar.fields]]
+name = "flags"          # u16  bitfield (see [md_bar.flags])
+type = "u16"
+offset = 72
+size = 2
+
+[[md_bar.fields]]
+name = "schema_version" # u8   layout version guard; readers reject unknown values
+type = "u8"
+offset = 74
+size = 1
+
+[[md_bar.fields]]
+name = "kind"           # u8   record kind discriminant (see [md_bar.kinds])
+type = "u8"
+offset = 75
+size = 1
+
+[[md_bar.fields]]
+name = "reserved"       # padding to 128; MUST be zeroed. The obvious next occupant is
+type = "u8[52]"         # the venue's trade count for the bar (Hyperliquid's `n`), which
+offset = 76             # is left out today only because `axon_core::Candle` does not
+size = 52               # carry it — a permanently-zero field is worse than a reserved one.
+
+# ─── The SPSC ring header (shared-memory layout; ADR-0006, ADR-0012) ──────────
+# Laid over the start of the mmap'd region. Head (producer) and tail (consumer)
+# live on SEPARATE 64-byte cache lines to avoid false sharing (~3x slowdown if
+# shared — see docs/research/python-rust-ipc.md). The data region of
+# `capacity * record_size` bytes begins immediately after the header.
+[ring]
+magic = 0x474E49524E4F5841   # u64 that reads as ASCII "AXONRING" in a little-endian hexdump
+version = 2                   # 2 adds `record_kind`; a v1 reader cannot check it, so it is refused
+cache_line = 64
+header_size = 192             # 3 cache lines: control | head | tail
+
+# `record_kind` values — WHICH record type the data region holds. ADR-0012 argued
+# that equal strides are a coincidence of the field lists rather than a guarantee;
+# `md_bar` makes that concrete — it is 128 bytes, exactly like `md_slice`, so
+# `record_size` cannot tell those two apart at all and this tag is the ONLY thing
+# that can. A reader that got past a stride check and mapped the wrong struct would
+# report an open price as a bid and keep going. 0 is left unassigned so a writer
+# that forgets to stamp the field is rejected instead of defaulting to "signal".
+[ring.record_kinds]
+signal   = 1
+md_slice = 2
+md_bar   = 3
+
+# control block — cache line 0 (written once at init, then read-only)
+[[ring.header_fields]]
+name = "magic"                # u64  identifies an Axon ring + guards against garbage
+type = "u64"
+offset = 0
+size = 8
+
+[[ring.header_fields]]
+name = "ring_version"         # u32  ring layout version
+type = "u32"
+offset = 8
+size = 4
+
+[[ring.header_fields]]
+name = "record_size"          # u32  bytes per record (= the carried record's `size`)
+type = "u32"
+offset = 12
+size = 4
+
+[[ring.header_fields]]
+name = "capacity"             # u32  number of record slots (MUST be a power of two)
+type = "u32"
+offset = 16
+size = 4
+
+[[ring.header_fields]]
+name = "record_schema_version" # u32  cross-check against the carried record's schema_version
+type = "u32"
+offset = 20
+size = 4
+
+[[ring.header_fields]]
+name = "record_kind"          # u32  which record type the data region holds (see above)
+type = "u32"
+offset = 24
+size = 4
+
+# producer index — cache line 1 (written by the producer, read by the consumer)
+[[ring.header_fields]]
+name = "head"                 # u64  total records ever written (monotonic)
+type = "u64"
+offset = 64
+size = 8
+
+# consumer index — cache line 2 (written by the consumer, read by the producer)
+[[ring.header_fields]]
+name = "tail"                 # u64  total records ever read (monotonic)
+type = "u64"
+offset = 128
+size = 8

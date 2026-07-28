@@ -1,0 +1,54 @@
+[package]
+name = "axon-runtime"
+description = "The Axon binary and session supervisor: loads config, owns the process lifecycle, wires the market-data/execution edges to the deterministic core, and runs the safety loop (dead-man's switch, /info reconciliation, rate governor, graceful shutdown)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "axon_runtime"
+path = "src/lib.rs"
+
+[[bin]]
+name = "axon"
+path = "src/main.rs"
+
+[dependencies]
+axon-contracts = { workspace = true }
+axon-core = { workspace = true }
+axon-execution = { workspace = true }
+axon-marketdata = { workspace = true }
+axon-provider-hyperliquid = { workspace = true }
+axon-providers = { workspace = true }
+# Session capture (ADR-0018). The edge runs runtime → replay: a live session records
+# itself by putting a `Capture` in its own handler chain. `axon-replay` names the runtime
+# back, but only under `[dev-dependencies]` — cargo permits a cycle through a dev edge
+# and forbids one through a normal edge, which is exactly what keeps this direction legal.
+axon-replay = { workspace = true }
+axon-risk = { workspace = true }
+# The intent source: the validating signal reader, the planner, and the ring the
+# Python producer writes into (ADR-0020). This is the dependency that finally gives
+# the submit pipeline a caller.
+axon-strategy = { workspace = true }
+axon-ipc = { workspace = true }
+async-trait = { workspace = true }
+# The core→edge intent queue. The same primitive as the event bus, and for the same
+# reason: the deterministic core hands work to the async edge without ever holding a
+# runtime handle (ADR-0008).
+crossbeam-channel = { workspace = true }
+rust_decimal = { workspace = true }
+serde = { workspace = true }
+# One line of JSONL framing, for appending a signal record as it happens: `SignalLog`
+# owns the record's *shape* and only writes a whole slice at once, and a signal log
+# assembled at close is the log a crash loses.
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+toml = { workspace = true }
+# `signal` on top of the workspace feature set: graceful shutdown has to hear
+# SIGTERM (how a supervisor stops us) and not just Ctrl-C.
+tokio = { workspace = true, features = ["signal"] }
+
+[dev-dependencies]
+rust_decimal_macros = { workspace = true }

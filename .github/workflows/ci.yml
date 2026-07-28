@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  # A globally-installed pytest plugin must never break our clean-env runs.
+  PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+
+jobs:
+  # One gate, run on both prod-parity (Linux) and dev-parity (Windows), proving
+  # the "one codebase, both OSes" claim from ADR-0007.
+  build-test:
+    name: build + test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust (stable + rustfmt + clippy)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: rustfmt
+        run: cargo fmt --all --check
+
+      - name: clippy (deny warnings)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Rust tests
+        run: cargo test --workspace
+
+      # Already covered by the step above. Named separately so a red gate reads as
+      # "model parity broke" rather than "a test in axon-model failed" — the frozen
+      # Python answers in tests/bundles are a contract between two languages, and
+      # which one moved is the first question anyone asks.
+      - name: Cross-language model-parity gate (ADR-0021)
+        run: cargo test -p axon-model --test cross_language_parity
+
+      - name: Build IPC examples (used by the cross-language round-trip test)
+        run: cargo build -p axon-ipc --examples
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python deps
+        run: python -m pip install --upgrade pip numpy pytest
+
+      - name: Python tests (incl. Python↔Rust round-trip)
+        run: python -m pytest python/tests -v
+        env:
+          PYTHONPATH: python
+
+  # The gate above deliberately runs on bare numpy+pytest, so every test needing a heavy
+  # ML dependency skips. That proves the *skips* work — it does not run the parity gates.
+  # This job installs the extras so the model-export, inference and parity tests actually
+  # execute. Linux only: it is the prod target, and the wheels are large.
+  ml-extras:
+    name: parity gates (ML extras)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python deps + ML extras
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest ./python[ml]
+
+      # No Rust here: the cross-language round-trip skips cleanly without cargo, and the
+      # Rust side is already covered by the matrix job above.
+      - name: Python tests with ML extras present
+        run: python -m pytest python/tests -v
+        env:
+          PYTHONPATH: python

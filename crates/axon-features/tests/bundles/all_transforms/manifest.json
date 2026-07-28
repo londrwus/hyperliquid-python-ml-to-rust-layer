@@ -1,0 +1,77 @@
+{
+  "bundle_schema": 1,
+  "criterion": {
+    "kind": "bit_exact"
+  },
+  "features": {
+    "bytes": 129600,
+    "cols": 18,
+    "file": "features.f64",
+    "finite_rows": 730,
+    "names": [
+      "mid",
+      "spread_abs",
+      "spread_bps",
+      "book_imb",
+      "tfi_16",
+      "range_bps",
+      "clv",
+      "ret_1",
+      "mom_8",
+      "vol_16",
+      "mean_12",
+      "std_12",
+      "sum_12",
+      "z_12",
+      "std_12_s",
+      "sma_x_4_12",
+      "ema_8",
+      "ema_x_4_12"
+    ],
+    "nan_cells": 921,
+    "rows": 900,
+    "sha256": "sha256:b2a63adc753dc89433190c36a128e3d29001db743b560f44428234acf67f2031"
+  },
+  "inputs": {
+    "bytes": 64800,
+    "cols": 9,
+    "file": "inputs.f64",
+    "names": [
+      "ask_px",
+      "ask_sz",
+      "bid_px",
+      "bid_sz",
+      "close",
+      "high",
+      "low",
+      "trade_sign",
+      "trade_sz"
+    ],
+    "nan_cells": 0,
+    "rows": 900,
+    "sha256": "sha256:033760eae6d5446856bf560f50f991e31b86c60d837a7c9b17105f5df4c4f2d5"
+  },
+  "libm_columns": [
+    "ret_1",
+    "mom_8",
+    "vol_16"
+  ],
+  "library_version": 1,
+  "note": "Written by axon.parity.feature_bundle; regenerate rather than hand-edit.",
+  "producer": {
+    "numpy": "2.5.1",
+    "python": "3.12.13"
+  },
+  "source": {
+    "description": "every registered transform, exactly once, so the gate covers the library rather than the subset a shipped spec uses. Bars are real committed venue rows; the book and tape columns are DERIVED from them by generate.py::_book_from_bars and are not a recorded book",
+    "instrument": "BTC",
+    "interval": "1m",
+    "venue": "hyperliquid-mainnet + derived"
+  },
+  "spec": {
+    "bytes": 1640,
+    "file": "spec.json",
+    "sha256": "sha256:24aab41ed198e64f45adc3496d6a1dabee665c99a319c6c191f8f67988ca19c6"
+  },
+  "spec_ref": "feature_gate_coverage/v1#18505e8517f0f463"
+}

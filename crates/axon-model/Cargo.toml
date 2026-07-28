@@ -1,0 +1,20 @@
+[package]
+name = "axon-model"
+description = "Axon Boundary-A native inference (ADR-0019): XGBoost served from its native JSON by threshold traversal, ONNX served by tract. FP32 end-to-end, gated by the model-parity fixtures in tests/ (ADR-0003, ADR-0005)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+# tract lives here rather than in [workspace.dependencies] on purpose: that
+# manifest is for versions several crates share, and listing a single-consumer,
+# forty-crate dependency tree there advertises it as common vocabulary. The
+# version is pinned exactly because ONNX operator semantics *are* the numbers
+# tests/parity.rs asserts on — a silent patch bump could move a result inside
+# the 1e-5 tolerance with no code change here to blame it on (ADR-0019).
+tract-onnx = "=0.23.4"

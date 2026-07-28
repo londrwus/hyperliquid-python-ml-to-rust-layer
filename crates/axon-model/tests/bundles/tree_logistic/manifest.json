@@ -1,0 +1,58 @@
+{
+  "artifact": {
+    "bytes": 10390,
+    "file": "model.json",
+    "sha256": "sha256:ab3652f8543a8667af8dfc2e2943d428c349908c36210ccc1270f57d301990f4"
+  },
+  "bundle_schema": 1,
+  "criterion": {
+    "kind": "bit_exact"
+  },
+  "decision": {
+    "long_at_approx": 1.395517110824585,
+    "long_at_bits": "0x3fb2a04e",
+    "short_at_approx": -0.7490206956863403,
+    "short_at_bits": "0xbf3fbfd2"
+  },
+  "decisions": {
+    "bytes": 128,
+    "counts": {
+      "flat": 26,
+      "long": 51,
+      "short": 51
+    },
+    "file": "decisions.i8",
+    "rows": 128,
+    "sha256": "sha256:2b1ca13c62b4564f47bde63093337a79b80f0aa8179de3dc152be21361b13cec"
+  },
+  "exported_by": {
+    "xgboost": "3.3.0"
+  },
+  "feature_spec_ref": "synthetic_probe/v1#839d283795e5fd59",
+  "features": {
+    "bytes": 2560,
+    "cols": 5,
+    "file": "features.f32",
+    "missing_cells": 110,
+    "rows": 128,
+    "sha256": "sha256:08004e63ae4ca7deea4cc1d49c2116bd91b99c2a127507712aebe0c27cb851e4"
+  },
+  "git_sha": "1bd4d5714d62193c08f1fe158812cbd3c4d6b643-dirty",
+  "kind": "xgboost",
+  "model_version": 22,
+  "note": "Written by axon.parity.rust_gate; regenerate rather than hand-edit.",
+  "predictions": {
+    "bytes": 512,
+    "cols": 1,
+    "file": "predictions.f32",
+    "rows": 128,
+    "sha256": "sha256:6ee942ae3ce565c9257e8440034969bf00a4f69166911fa0da48335091ee8aa1"
+  },
+  "producer": {
+    "numpy": "2.5.1",
+    "python": "3.12.13",
+    "xgboost": "3.3.0"
+  },
+  "registry_id": "parity_tree_logistic",
+  "score_space": "margin"
+}

@@ -1,0 +1,6 @@
+# The repo root ignores `*.onnx` so nobody commits a trained model by accident.
+# These graphs are the deliberate exception: they are a few hundred bytes each
+# and they *are* the model-parity gate (ADR-0019). The gate compares Rust
+# against a frozen Python answer, so the artifacts have to live in the tree —
+# regenerating them next to the assertion would prove nothing.
+!*.onnx

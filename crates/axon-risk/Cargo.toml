@@ -1,0 +1,18 @@
+[package]
+name = "axon-risk"
+description = "Axon pre-trade risk checks on the hot path: position/notional/order-size limits and reduce-only enforcement. Fast, allocation-free, never the bottleneck."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+axon-core = { workspace = true }
+axon-providers = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+
+[dev-dependencies]
+rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }

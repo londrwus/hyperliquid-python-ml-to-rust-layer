@@ -1,0 +1,57 @@
+# M7 soak — the induced-outage plan, in seconds from the start of the plan.
+#
+#   <at_s> <kind> <duration_s> [life_ms]
+#
+# `cut`   — the loopback port dies: every live connection is RST and new ones get
+#           ECONNREFUSED. The error path, and the capped exponential backoff.
+# `churn` — connections are relayed normally and closed *cleanly* after `life_ms`, once
+#           the handshake and the subscribe frames are long past. This is the branch
+#           `reconnect_forever` reads as a clean close.
+#
+# Lengths are deliberately spread over four orders of magnitude — 0.3 s to 10 minutes —
+# because a reconnect loop that only ever sees short breaks is never asked to back off,
+# and a `userFills` snapshot only re-teaches a session something after a gap long enough
+# for the venue's own state to have moved inside it.
+#
+# Every gap between outages is at least 45 s of uninterrupted recovery. Hammering
+# reconnects is abusive and also measures nothing: what is under test is whether a
+# session recovers, and one that is never left alone is never given the chance to fail
+# to. The offsets are deliberately not multiples of 20 s (the re-arm cadence) or 15 s
+# (the reconcile poll), so successive breaks land at different phases of both.
+
+0     cut   0.8
+70    cut   0.3
+150   cut   3
+230   cut   9
+330   cut   20
+450   cut   35
+580   cut   50
+700   churn 45  5000
+800   churn 36  12000
+920   cut   180
+1160  cut   75
+1300  cut   5
+1400  churn 30  3000
+1520  cut   300
+1880  cut   25
+2000  cut   120
+2180  cut   2
+2280  cut   45
+2400  churn 40  8000
+2520  cut   600
+3180  cut   15
+3300  cut   90
+3450  cut   1
+3560  cut   30
+3700  cut   240
+3990  cut   0.5
+4080  cut   60
+4200  cut   20
+4300  cut   420
+4790  cut   7
+4880  cut   150
+5090  cut   0.4
+5170  cut   40
+5280  churn 50  6000
+5400  cut   90
+5560  cut   12

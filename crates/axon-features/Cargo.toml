@@ -1,0 +1,23 @@
+# The Rust feature runtime — the half of Boundary A that ADR-0021 could not gate.
+#
+# No tokio, no network, no clock. This crate is part of the deterministic core:
+# it turns market-data arrays into a feature matrix, and it is held to *bit*
+# equality with `axon.features` (ADR-0035).
+[package]
+name = "axon-features"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Feature transforms in Rust, bit-identical to axon.features"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+# The spec fingerprint is recomputed here rather than trusted, so this crate needs
+# the same SHA-256 Python takes it with. It is the *only* place a hash is computed
+# in the feature path, and it runs once at load time, never per row.
+sha2 = { workspace = true }

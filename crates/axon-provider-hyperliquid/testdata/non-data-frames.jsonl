@@ -1,0 +1,2 @@
+{"channel":"subscriptionResponse","data":{"method":"subscribe","subscription":{"type":"bbo","coin":"BTC"}}}
+{"channel":"pong"}

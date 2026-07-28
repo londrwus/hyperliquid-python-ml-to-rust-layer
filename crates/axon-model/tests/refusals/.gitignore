@@ -1,0 +1,7 @@
+# The repo root ignores `*.onnx` so nobody commits a trained model by accident.
+# These graphs are the deliberate exception: they are a couple of kilobytes each
+# and they are the *refusal* half of the model-family gate — the shapes
+# skl2onnx and onnxmltools emit by default, committed so that "tract will not
+# serve a TreeEnsembleRegressor" is a test rather than something someone
+# remembers. Regenerating them next to the assertion would prove nothing.
+!*.onnx

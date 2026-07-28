@@ -1,0 +1,15 @@
+[package]
+name = "axon-marketdata"
+description = "Axon market-data plane: order-book maintenance and normalized tick/bar/book events. Phase 2 fills in the event pipeline; this ships a correct L2 book to build on."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+axon-core = { workspace = true }
+
+[dev-dependencies]
+rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }

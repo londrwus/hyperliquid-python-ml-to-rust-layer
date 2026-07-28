@@ -1,0 +1,6 @@
+# The repo root ignores `*.onnx` so nobody commits a trained model by accident.
+# The graph in mlp_regressor/ is the deliberate exception: it is a few kilobytes
+# and it *is* the cross-language parity gate (ADR-0021). The gate compares Rust
+# against a frozen Python answer, so the artifact has to live in the tree —
+# regenerating it next to the assertion would prove nothing.
+!*.onnx

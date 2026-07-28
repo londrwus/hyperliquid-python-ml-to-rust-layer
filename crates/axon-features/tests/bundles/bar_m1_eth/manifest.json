@@ -1,0 +1,59 @@
+{
+  "bundle_schema": 1,
+  "criterion": {
+    "kind": "bit_exact"
+  },
+  "features": {
+    "bytes": 43200,
+    "cols": 6,
+    "file": "features.f64",
+    "finite_rows": 875,
+    "names": [
+      "ret_1",
+      "mom_5",
+      "z_20",
+      "vol_20",
+      "range_bps",
+      "clv"
+    ],
+    "nan_cells": 50,
+    "rows": 900,
+    "sha256": "sha256:25286663379c720514697f658a5bd1f8908ba372bd88105a03b52c6be6b4ec7a"
+  },
+  "inputs": {
+    "bytes": 21600,
+    "cols": 3,
+    "file": "inputs.f64",
+    "names": [
+      "close",
+      "high",
+      "low"
+    ],
+    "nan_cells": 0,
+    "rows": 900,
+    "sha256": "sha256:c06e521cd7f1b6f64c46e98791bef69e57f234d7ae16724999cc9f37814a25af"
+  },
+  "libm_columns": [
+    "ret_1",
+    "mom_5",
+    "vol_20"
+  ],
+  "library_version": 1,
+  "note": "Written by axon.parity.feature_bundle; regenerate rather than hand-edit.",
+  "producer": {
+    "numpy": "2.5.1",
+    "python": "3.12.13"
+  },
+  "source": {
+    "description": "verbatim Hyperliquid candleSnapshot rows, committed at python/axon/strategies/_fixtures",
+    "instrument": "ETH",
+    "interval": "1m",
+    "venue": "hyperliquid-mainnet"
+  },
+  "spec": {
+    "bytes": 610,
+    "file": "spec.json",
+    "sha256": "sha256:fa34c37a352dae64de08164eb01fff2ad027d19b2ab925356178f6bee74a741d"
+  },
+  "spec_ref": "bar_m1/v1#c503688de24e863f"
+}

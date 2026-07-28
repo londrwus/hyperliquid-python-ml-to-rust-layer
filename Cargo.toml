@@ -1,0 +1,95 @@
+# Axon — Rust execution plane (workspace root).
+# See docs/01-architecture.md and crates/README.md for the crate map.
+[workspace]
+resolver = "2"
+members = [
+    "crates/axon-contracts",
+    "crates/axon-core",
+    "crates/axon-ipc",
+    "crates/axon-providers",
+    "crates/axon-risk",
+    "crates/axon-marketdata",
+    "crates/axon-execution",
+    "crates/axon-replay",
+    "crates/axon-model",
+    "crates/axon-features",
+    "crates/axon-strategy",
+    "crates/axon-provider-hyperliquid",
+    "crates/axon-provider-binance",
+    "crates/axon-runtime",
+]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2021"
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/axon/hyperliquid-ml-rust-layer"
+authors = ["Axon contributors"]
+
+# Shared, version-pinned dependencies. Individual crates opt in with
+# `dep = { workspace = true }`, so every crate uses the same version.
+[workspace.dependencies]
+# ── contract / IPC ──
+bytemuck = { version = "1.19", features = ["derive"] }
+memmap2 = "0.9"
+# ── errors / (de)serialization ──
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+# The feature spec's fingerprint is a SHA-256 Python takes over canonical JSON, and
+# `axon-features` recomputes it rather than trusting it (ADR-0035). Confined to that
+# crate: nothing on the order path hashes anything.
+sha2 = "0.10"
+# ── money / domain ──
+rust_decimal = "1"
+rust_decimal_macros = "1"
+# ── in-process bus (sync core; NOT async) ──
+# The seam async edges use to hand normalized events to the deterministic core.
+# A bounded crossbeam channel keeps the core off the tokio runtime (ADR-0008).
+crossbeam-channel = "0.5"
+# ── async edges (providers/adapters only; never the hot core) ──
+async-trait = "0.1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "sync", "io-util"] }
+# WebSocket ingest (rustls — no OpenSSL/native-tls on Windows/WSL). Defaults give
+# connect/handshake/stream; we add rustls-with-webpki-roots.
+tokio-tungstenite = { version = "0.30", features = ["rustls-tls-webpki-roots"] }
+futures-util = { version = "0.3", default-features = false, features = ["std", "sink"] }
+# REST snapshot seeding (l2Book) — rustls, JSON, no default TLS stack.
+reqwest = { version = "0.13", default-features = false, features = ["json", "rustls", "webpki-roots", "http2"] }
+# ── signing (execution edge) ──
+# alloy = ecosystem-standard, audited crypto (keccak256, EIP-712, secp256k1),
+# matching the official Hyperliquid Rust SDK. rmp-serde = the HL msgpack action
+# encoding. Confined to axon-provider-hyperliquid (ADR-0009).
+alloy-primitives = "1"
+alloy-sol-types = "1"
+alloy-signer = "2"
+alloy-signer-local = { version = "2", features = ["zeroize"] }
+rmp-serde = "1"
+# ── internal crates ──
+axon-contracts = { path = "crates/axon-contracts" }
+axon-core = { path = "crates/axon-core" }
+axon-ipc = { path = "crates/axon-ipc" }
+axon-providers = { path = "crates/axon-providers" }
+axon-risk = { path = "crates/axon-risk" }
+axon-marketdata = { path = "crates/axon-marketdata" }
+axon-execution = { path = "crates/axon-execution" }
+axon-replay = { path = "crates/axon-replay" }
+axon-model = { path = "crates/axon-model" }
+axon-features = { path = "crates/axon-features" }
+axon-strategy = { path = "crates/axon-strategy" }
+axon-provider-hyperliquid = { path = "crates/axon-provider-hyperliquid" }
+# Top of the graph, and listed here anyway: `axon-replay` names it as a *dev*-dependency
+# so the golden harness drives the production chain rather than a copy of it. A path
+# dependency living only in that crate's manifest is how one crate ends up pinned
+# differently from the rest of the workspace the day a version appears here.
+axon-runtime = { path = "crates/axon-runtime" }
+
+# Optimize the workspace for a deterministic, low-jitter core. `codegen-units = 1`
+# and LTO trade compile time for a tighter, more predictable release binary.
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"

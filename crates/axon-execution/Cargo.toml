@@ -1,0 +1,19 @@
+[package]
+name = "axon-execution"
+description = "Axon execution engine: order manager (lifecycle + reconciliation), the unbypassable pre-trade risk gate, and routing to the provider."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+axon-core = { workspace = true }
+axon-providers = { workspace = true }
+axon-risk = { workspace = true }
+async-trait = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+rust_decimal = { workspace = true }
+rust_decimal_macros = { workspace = true }

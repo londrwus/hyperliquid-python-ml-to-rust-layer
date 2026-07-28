@@ -1,0 +1,63 @@
+{
+  "artifact": {
+    "bytes": 497,
+    "file": "model.onnx",
+    "sha256": "sha256:0a37a8d3c354cbd2c80f38db62a7fee78100fd59136ecbfd69548e88f1e9973b"
+  },
+  "bundle_schema": 1,
+  "criterion": {
+    "eps": 2.384185791015625e-07,
+    "kind": "max_abs_diff"
+  },
+  "decision": {
+    "long_at_approx": 0.4799977242946625,
+    "long_at_bits": "0x3ef5c243",
+    "short_at_approx": 0.4599637985229492,
+    "short_at_bits": "0x3eeb8060"
+  },
+  "decisions": {
+    "bytes": 348,
+    "counts": {
+      "flat": 70,
+      "long": 139,
+      "short": 139
+    },
+    "file": "decisions.i8",
+    "rows": 348,
+    "sha256": "sha256:48d07655639500b3fa27b3ce7d495ab9c0941b6a28e9b38538a03fcaceb9d2bd"
+  },
+  "exported_by": {
+    "onnx": "1.22.0",
+    "opset": "22",
+    "skl2onnx": "1.20.0",
+    "sklearn": "1.9.0"
+  },
+  "feature_spec_ref": "bar_m1/v1#c503688de24e863f",
+  "features": {
+    "bytes": 8352,
+    "cols": 6,
+    "file": "features.f32",
+    "missing_cells": 0,
+    "rows": 348,
+    "sha256": "sha256:2c68eedb6536d65e35a583b5c5c3665df1217c19c353a32610dfd86a29e168f2"
+  },
+  "git_sha": "1bd4d5714d62193c08f1fe158812cbd3c4d6b643-dirty",
+  "kind": "onnx",
+  "model_version": 1,
+  "note": "Written by axon.parity.rust_gate; regenerate rather than hand-edit.",
+  "predictions": {
+    "bytes": 1392,
+    "cols": 1,
+    "file": "predictions.f32",
+    "rows": 348,
+    "sha256": "sha256:9486c177ddf5d01fef3e54c981fe5a32fabefcd4eac484b90f1a1dfd0dc434c5"
+  },
+  "producer": {
+    "numpy": "2.5.1",
+    "onnx": "1.22.0",
+    "onnxruntime": "1.28.0",
+    "python": "3.12.13"
+  },
+  "registry_id": "zoo_logistic",
+  "score_space": "score"
+}

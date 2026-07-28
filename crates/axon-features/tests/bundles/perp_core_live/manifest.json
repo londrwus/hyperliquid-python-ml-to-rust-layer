@@ -1,0 +1,65 @@
+{
+  "bundle_schema": 1,
+  "criterion": {
+    "kind": "bit_exact"
+  },
+  "features": {
+    "bytes": 48600,
+    "cols": 9,
+    "file": "features.f64",
+    "finite_rows": 636,
+    "names": [
+      "mid",
+      "spread_bps",
+      "book_imb",
+      "ret_1",
+      "mom_32",
+      "vol_32",
+      "ema_x_8_32",
+      "z_32",
+      "tfi_32"
+    ],
+    "nan_cells": 166,
+    "rows": 675,
+    "sha256": "sha256:bf092ae16e1583e7e33c76e73d23e8e434edb03d1ed2bfeadbaf65de886c7531"
+  },
+  "inputs": {
+    "bytes": 32400,
+    "cols": 6,
+    "file": "inputs.f64",
+    "names": [
+      "ask_px",
+      "ask_sz",
+      "bid_px",
+      "bid_sz",
+      "trade_sign",
+      "trade_sz"
+    ],
+    "nan_cells": 0,
+    "rows": 675,
+    "sha256": "sha256:fa0f61a1d6adbd54c811664d283bc18770126b392cff483e77db7af345291d4f"
+  },
+  "libm_columns": [
+    "ret_1",
+    "mom_32",
+    "vol_32"
+  ],
+  "library_version": 1,
+  "note": "Written by axon.parity.feature_bundle; regenerate rather than hand-edit.",
+  "producer": {
+    "numpy": "2.5.1",
+    "python": "3.12.13"
+  },
+  "source": {
+    "description": "market-data slices from a live read-only Hyperliquid testnet session: venue frames -> Rust core -> MdPublisher -> the MdSlice ring -> Python. A recorded order book and tape, not a derived one",
+    "instrument": "symbol_id=3",
+    "interval": "tick",
+    "venue": "hyperliquid-testnet"
+  },
+  "spec": {
+    "bytes": 870,
+    "file": "spec.json",
+    "sha256": "sha256:b01030e4ed9ca61c304c7dbfb759b7c17d3a2f89a966ea2abc0813b07aae5c30"
+  },
+  "spec_ref": "perp_core/v1#868d3dbe95d4b386"
+}

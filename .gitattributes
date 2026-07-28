@@ -1,0 +1,14 @@
+# Normalize to LF in the repo and in the working tree on every OS. Critical for
+# the shell scripts (a CRLF `\r` breaks the bash shebang in Git Bash/WSL/Linux)
+# and keeps Rust/Python/TOML byte-identical across Windows and Linux checkouts.
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.rs   text eol=lf
+*.py   text eol=lf
+*.toml text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+
+# Cargo.lock is tracked (application workspace with a binary).
+Cargo.lock text eol=lf

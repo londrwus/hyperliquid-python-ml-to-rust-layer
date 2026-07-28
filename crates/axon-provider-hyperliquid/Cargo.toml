@@ -1,0 +1,68 @@
+[package]
+name = "axon-provider-hyperliquid"
+description = "Hyperliquid venue adapter (adapter #1): signing (two EIP-712 schemes), nonce windows, order encoding, WS/REST. Phase 2 = read-only market data; Phase 3 = execution. This ships the capability descriptor."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+axon-core = { workspace = true }
+axon-providers = { workspace = true }
+# Fixed-point money math for px/sz string parsing (never f64).
+rust_decimal = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+# Async edges: WS ingest + REST snapshot seeding. Never touches the core loop.
+async-trait = { workspace = true }
+tokio = { workspace = true }
+tokio-tungstenite = { workspace = true }
+futures-util = { workspace = true }
+reqwest = { workspace = true }
+# Signing (execution edge): alloy crypto + HL msgpack action encoding (ADR-0009).
+alloy-primitives = { workspace = true }
+alloy-sol-types = { workspace = true }
+alloy-signer = { workspace = true }
+alloy-signer-local = { workspace = true }
+rmp-serde = { workspace = true }
+
+[dev-dependencies]
+rust_decimal_macros = { workspace = true }
+tokio = { workspace = true, features = ["test-util"] }
+# For the `live_book` example: the core-side processor that turns the streamed
+# events into a maintained book + BBO cache.
+axon-marketdata = { workspace = true }
+# For `tests/live_fill_testnet.rs`: the fill verification is only meaningful if the
+# *real* `OrderTracker` reconciles it — a bespoke tally in the test would prove the
+# test, not the reconciliation. Dev-only, so nothing about the adapter's dependency
+# direction changes: execution still depends on providers, never the reverse.
+axon-execution = { workspace = true }
+# For `tests/live_cancel_testnet.rs`. The cancel half of ADR-0014 §6 does not live in
+# this crate: the planner decides *whether* to cancel (`axon-strategy`), the runtime
+# re-addresses an adopted order's cancel to a venue oid and submits cancels before
+# orders (`axon_runtime::intent`), and only the last hop is ours. A test that
+# reimplemented any of that would be a test of itself, which is exactly how the old
+# live test came to round its own prices and pass over a broken encoder.
+#
+# **Dev-only, and that is load-bearing.** `axon-runtime` depends on this crate as a
+# normal dependency; cargo permits a cycle through a dev edge and forbids one through
+# a normal edge, so nothing in `src/` here may ever name the runtime. The same edge,
+# for the same reason, as `axon-replay`'s.
+axon-runtime = { workspace = true }
+axon-strategy = { workspace = true }
+axon-contracts = { workspace = true }
+
+# Cargo defaults example targets to `test = false`, so unit tests inside an example
+# compile in the gate and then never run — the worst of both worlds, because the
+# green build implies a coverage that does not exist. These two examples are
+# key-handling ceremonies (agent generation, the mainnet guard, the signed payload
+# shape), which is exactly the code that must not silently rot, so they opt in.
+[[example]]
+name = "approve_agent"
+test = true
+
+[[example]]
+name = "wallet_info"
+test = true

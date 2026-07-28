@@ -1,0 +1,292 @@
+# P7 — **several strategies, several coins, one account.** Hyperliquid *testnet*, m1
+# bars, minimum notional per leg, dead-man's switch armed (ADR-0038).
+#
+# Copied from `live-ml-testnet-m1.toml` rather than edited into it, for the same reason
+# that file was copied from the no-model one: that config is the record of what the
+# single-strategy run did, and this run's whole point is that there is more than one.
+# Every line that differs is named below.
+#
+# ── the one claim this session exists to make ──────────────────────────────────
+# Until ADR-0038 a session had one signal ring, one producer and therefore one strategy
+# on one instrument. Everything about the runtime that *looked* multi-instrument — the
+# per-symbol in-flight gate, the per-symbol held target, the per-symbol sweep — had only
+# ever been exercised at width one, because nothing could put two symbols on the ring.
+#
+# This session is that width. Two producers, three instruments, and one account that has
+# to hold the sum without either strategy silently overwriting the other's exposure.
+#
+# **Nothing here is tuned toward profit and no number in it is an edge claim.**
+# `zoo_xgboost`'s own verdict is SHOULD NOT TRADE and `baseline_z` has no model at all.
+# What is being tested is the plumbing: that two producers reach one venue, that their
+# claims add rather than fight, and that a portfolio bound refuses what the per-symbol
+# limits cannot see.
+#
+# ── what decides the size, and what merely bounds it ───────────────────────────
+# The **producers** decide, through `--strategy NAME=FACTORY:MAX_POSITION` on
+# `python -m axon.strategies.portfolio_runner`. At 0.0003 BTC / 0.006 ETH / 0.06 SOL each
+# leg is about $19-20, so the book's gross at full extension is roughly **$59** and its
+# net is anywhere from $59 (all three the same way) to $19 (two against one).
+#
+# `[portfolio]` and `[strategy.risk]` below only *bound*. Nothing there makes an order
+# smaller — except `scale_to_fit`, which is the one thing in this file that does, and
+# which is why it is spelled out rather than left at its default.
+environment = "sandbox"
+
+[venue]
+name = "hyperliquid"
+network = "testnet"
+account = "0x0000000000000000000000000000000000000000"  # fill in: the account AXON_HL_SECRET_KEY trades for
+
+[session]
+bus_capacity = 4096
+core_poll_us = 500
+status_interval_ms = 15000
+mark_max_age_ms = 10000
+# **Three instruments, not one.** Every previous trading config in this directory says
+# "one coin" in its header and gives the reason: a second instrument doubles the notional
+# at risk to answer a question one answers, and `LiveRunner` is single-instrument by
+# design. Both halves of that have changed. The question here *is* the second instrument,
+# and `portfolio_runner` drives all three from one bar-ring reader — which is the only
+# safe way, because an SPSC ring has one consumer and two readers steal from each other.
+feeds = [
+    "Bbo",
+    "L2Book",
+    "Ticker",
+    { Candles = "m1" },
+]
+
+[safety]
+dead_mans_switch = true
+lead_ms = 60000
+rearm_interval_ms = 20000
+
+[reconcile]
+interval_ms = 15000
+grace_ms = 5000
+rate_limit_every = 10
+
+[governor]
+place_reserve_credits = 1000
+place_reserve_ip_weight = 200
+initial_address_cap = 10000
+
+# **Not read by this session**, and left here rather than deleted so the omission is
+# visible: with `[[strategy.producer]]` tables declared, every ring comes from those and
+# `ipc.signal_ring_path` is ignored. `capacity` *is* still read — it is the ring depth
+# every producer is validated against, and the Python side sizes its outbox from it.
+[ipc]
+signal_ring_path = "/dev/shm/p7-portfolio-unused.ring"
+capacity = 1024
+
+[intent]
+enabled = true
+drain_interval_ms = 1
+# Per **producer**, not shared across them: the bound exists so one producer's burst
+# cannot starve market-data processing on the same thread, and that is a property of each
+# producer's own ring. A shared budget would let a chatty strategy starve a quiet one in a
+# way that reads on the status line as the quiet one having nothing to say.
+max_per_drain = 32
+# 60 s, matching the zoo's ttl. The shipped 2 000 ms ceiling refuses every signal a bar
+# strategy emits — an m1 bar reaches the strategy a median 12.9 s after its own close —
+# and the symptom is a strategy that emits and never trades.
+max_signal_age_ms = 60000
+# Deeper than the single-producer runs' 64: a pass can now plan one intent per
+# *instrument*, and three instruments' worth of cancels and orders is three times the
+# burst the queue was sized for.
+queue_capacity = 128
+submit_poll_ms = 2
+attach_retry_ms = 1000
+taker_slippage_bps = 50
+# The venue's $10 minimum as a quantity — for **BTC**. This is the one number in this file
+# that is wrong for a multi-instrument session and cannot yet be right: `min_order_qty` is
+# a single figure applied to every instrument, so 0.00016 is $10 of BTC and $0.0003 of
+# ETH. On this book that errs harmless (ETH and SOL deltas are far above it), and it is
+# named here rather than discovered: a per-instrument dust floor is the same shape as
+# `SizeGrid`'s missing `min_qty` (ADR-0023) and belongs with it.
+min_order_qty = "0.00016"
+noop_band_bps = 0
+max_order_age_ms = 60000
+sweep_interval_ms = 1000
+max_requotes = 3
+
+[md_ring]
+enabled = true
+path = "/dev/shm/p7-portfolio-md.ring"
+# 4096 x 128 B on tmpfs. Nothing advances the ring's tail until a consumer attaches, so
+# starting this session before the Python producer lets each strategy warm its 21-bar
+# window from history the instant it attaches — on m1, 21 minutes saved, per instrument.
+capacity = 4096
+policy = "on_change"
+
+[capture]
+enabled = true
+path = "data/captures/p7-portfolio-m1.jsonl"
+signals = true
+queue_capacity = 16384
+max_bytes = 0
+
+# ── the money view (warnings; ADR-0036) ───────────────────────────────────────
+[pnl]
+# 1.50 USDC. Three legs at ~$19.5 each, so this is ~2.5 % of the book's gross — the same
+# fraction the single-coin run set against one leg, scaled to three. It is a *warning*:
+# nothing here can halt the session.
+max_session_loss = "1.50"
+# 0.75 USDC. Our accounting cannot see funding and a perp pays it hourly, so drift is
+# expected to be non-zero and to grow. Three times the single-leg run's 0.25, because
+# there are three positions paying it.
+equity_drift_alarm = "0.75"
+
+# ── the latency budgets (ADR-0036, ADR-0037 §4) ───────────────────────────────
+# Unchanged from the single-strategy run, deliberately. Every one of these is a statement
+# about one decision's journey from a bar's close to an order at the venue, and nothing
+# about that journey is per-session-width — a breach here on this run is a finding about
+# the venue or the feed, not about there being two producers.
+[latency]
+cause_to_decision_ms = 60000
+signal_age_ms = 20000
+submit_ack_ms = 1000
+decision_to_ack_ms = 25000
+breach_warn_pct = 25
+
+# ── the bounds that only exist across symbols (ADR-0038) ──────────────────────
+#
+# **Read the evidence before changing a number here.** These are argued from
+# `python -m axon.strategies.portfolio_evidence`, which measures what a book of these legs
+# would actually have held over every non-overlapping window of the cached m1 corpus. They
+# are not round numbers and they are not derived from the per-leg sizes by arithmetic;
+# `docs/adr/0038-many-strategies-one-account.md` §6 carries the run.
+[portfolio]
+# **70 USDC, and the number comes from a measurement.** Over 16 000 windows of the cached
+# m1 corpus, at exactly these per-leg sizes, the gross a book of these legs would have held
+# peaked at **63.02** (p50 35.20, p95 54.88, p99 61.39). The candidate table the evidence
+# run prints is what a bound is chosen from:
+#
+#     cap   binds in windows   binds on bars   worst scale
+#      30       68.0 %             42.3 %         0.476
+#      40       34.3 %             14.1 %         0.635
+#      60        2.0 %              0.6 %         0.952
+#      80        0   %              0   %         1.000
+#
+# The difference between a limit and a position size nobody chose is that column, not an
+# opinion: a cap of 30 would be binding on 42 % of bars, at which point it is the
+# strategies' sizing applied by the wrong object and reported nowhere its author would
+# look. 70 sits between the last cap that binds on anything and the first that binds on
+# nothing — a backstop against a producer that has gone wrong, which is what a *first*
+# multi-producer session wants.
+max_gross_notional = "70"
+# Equal to the gross, and that is a **measurement rather than a concession**. The net/gross
+# ratio over those 16 000 windows had a median of **1.000** and a minimum of **0.524**: on
+# half of them these legs did not offset at all, and on the best of them they halved. A
+# bound has to hold in the worst case and the worst case is 1.000, so a net bound below the
+# gross one would bind on a book that is not diversified — while `PortfolioLimits::validate`
+# refuses one *above* it, because |sum| <= sum of |.| makes it unable to bind at all. BTC,
+# ETH and SOL move together and two of the three legs here run the same rule; the number
+# that should come down is waiting on model families that genuinely disagree, which is a
+# fitting job rather than a config change.
+max_net_notional = "70"
+# Three, which is every instrument this session subscribes. It cannot bind here and is set
+# anyway, because a breadth cap's failure mode is a session that quietly opens a fourth
+# instrument after a config edit — and the cap is the only thing that would notice.
+max_symbols = 3
+# **Exclusive**, so a second producer claiming an instrument the first already holds is
+# refused at *startup* rather than netted at runtime. Netting is correct and it is opt-in:
+# two producers on one coin is far more often a copy-pasted config than a decision, and
+# the accident composes two strategies' risk into a position neither author sized. The
+# producers below declare disjoint universes, so this never fires — which is how it should
+# read on a config that is right.
+overlap = "exclusive"
+# On, and inert: it does nothing unless `max_gross_notional` binds, and on this book it
+# does not. Spelled out rather than left at its default because it is the one setting in
+# this file that can make an order *smaller* than the strategy asked for, and a session
+# where that could happen silently is a session where every position being under target
+# reads as a strategy that changed its mind.
+scale_to_fit = true
+
+[strategy]
+name = "p7-portfolio-m1"
+version = 1
+symbols = [
+    "BTC-PERP",
+    "ETH-PERP",
+    "SOL-PERP",
+]
+
+# Mandatory in the schema and **never read** — `grep -rn model_ref crates/` returns two
+# hits, both in `config.rs`. It is more obviously wrong on this session than on any before
+# it: there are two producers here serving two different things, and this field can name
+# one. The Python side names what it loads, per producer, on its own command line.
+[strategy.model_ref]
+registry_id = "zoo_xgboost"
+version = 1
+
+# ── who is allowed to speak ───────────────────────────────────────────────────
+#
+# One ring per producer, and that is structural rather than a convention: the ring is SPSC,
+# `seq` is what proves nothing was lost, and it is per writer. Two producers interleaved on
+# one ring would be two sequences in a stream the reader validates as one, and every record
+# of the loser would be refused as `stale_seq` — a strategy emitting normally, its own
+# counters climbing, and nothing reaching the venue. `RuntimeConfig::validate` refuses two
+# producers on one path by name.
+#
+# The **Python side reads this same file** (`portfolio_runner --config`), so the ring paths
+# and the instrument scopes cannot drift between the two languages. What it does not read
+# from here is which strategy code sits behind each ring, because the runtime does not need
+# to know: that is `--strategy alpha=...` on the command line.
+
+# The ML leg. One family, two instruments — the same artifact serving BTC and ETH, which is
+# the claim ADR-0032's zoo could make about one coin and had never made about two at once.
+[[strategy.producer]]
+name = "alpha"
+signal_ring = "/dev/shm/p7-alpha.ring"
+symbols = ["BTC-PERP", "ETH-PERP"]
+# 30 USDC — a share of the portfolio's 70, deliberately under-allocated so the two
+# producers together (30 + 25) sit inside it with room. An *allocation*, not a gate: a
+# claim past it is scaled down rather than refused, so a strategy that asks for more than
+# its share converges to its share instead of emitting a target that is refused forever.
+max_gross_notional = "30"
+# Held. A producer that stops speaking keeps its claim, which is what every session before
+# ADR-0038 did — a target position is idempotent, so "said nothing" has always meant
+# "unchanged". The cost is real and is why the status line names it: `STRATEGY SILENT
+# alpha 312s` beside a position nobody is currently deciding about.
+on_silence = "hold"
+# 5 minutes. Five m1 bars' worth of silence from a strategy that should speak on every bar
+# it changes its mind about. It cannot fire on an ordinary quiet market, because a target
+# position is idempotent — so this fires on a producer that has *stopped*, which is the
+# only thing it is for.
+silence_ms = 300000
+
+# The no-model leg. `baseline_z` has no artifact, no registry entry and no export, which is
+# exactly why it is here: a session where alpha is silent and beta is not says the fault is
+# the model, not the bridge.
+[[strategy.producer]]
+name = "beta"
+signal_ring = "/dev/shm/p7-beta.ring"
+symbols = ["SOL-PERP"]
+max_gross_notional = "25"
+on_silence = "hold"
+silence_ms = 300000
+
+# The runtime's per-instrument ceilings, and the two loss bounds. These are unchanged in
+# *kind* from the single-strategy runs and changed in *size*, because they are applied to
+# each instrument separately and this session has three:
+#
+#   max_position   0.0016 — the most the tracker may project on ANY ONE instrument,
+#                  counting resting orders as if they all fill. Sized for the largest leg
+#                  (BTC at 0.0003, a long->short flip projecting 0.0006) with headroom, and
+#                  it is deliberately NOT sized for the book: that is `[portfolio]`'s job,
+#                  and a per-symbol cap raised to cover three instruments would stop
+#                  bounding any of them.
+#   max_order_qty  0.0014 — one order, above the largest flip.
+#   max_notional   40     — qty x mark, per instrument. Under the portfolio's 70, so a
+#                  single instrument can never be the whole book.
+#
+#   max_session_loss 2.00 — twice the single-coin run's 1.00, for three legs.
+#   max_daily_loss   4.00 — on the venue's own accountValue, against a baseline that
+#                  survives a restart.
+[strategy.risk]
+max_position = "0.0016"
+max_notional = "40"
+max_order_qty = "0.0014"
+max_session_loss = "2.00"
+max_daily_loss = "4.00"
+daily_state_path = "data/p7/day-loss-testnet.json"

@@ -1,0 +1,11 @@
+# The repo root sets `* text=auto eol=lf`, which is right for everything that is
+# source and catastrophic for everything here. These payloads are raw IEEE-754
+# and raw bytes: git's text heuristic only looks for a NUL in the first 8 kB, and
+# `tree_identity/predictions.f32` genuinely has none — so a `0x0D 0x0A` pair
+# occurring inside a float would be "normalized" to `0x0A` on checkout, silently
+# shortening the matrix and rewriting the very numbers the gate compares. The
+# gate would then fail on a machine whose only sin was checking the repo out.
+*.f32   binary
+*.i8    binary
+*.onnx  binary
+*.json  text eol=lf

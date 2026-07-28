@@ -1,0 +1,1874 @@
+{
+  "cancels": [
+    {
+      "signal_seq": 3,
+      "symbol_id": 1,
+      "target": "oid:56968034936",
+      "ts_event": 1774000000037000000
+    }
+  ],
+  "dropped_exec_events": 0,
+  "events": 59,
+  "first_ts": 1774000000000000000,
+  "intent_passes": 5,
+  "last_ts": 1774000000061000000,
+  "late_arrivals": 1,
+  "order": "event-time",
+  "orders": [
+    {
+      "cloid": "0x989e8399d8421b000000000100000001",
+      "price": "49999.0",
+      "qty": "0.03000000",
+      "reduce_only": false,
+      "side": "buy",
+      "signal_seq": 1,
+      "symbol_id": 1,
+      "tif": "post_only",
+      "ts_event": 1774000000012000000
+    },
+    {
+      "cloid": "0x989e8399d8e9f3c00000000200000002",
+      "price": "2999.4",
+      "qty": "0.50000000",
+      "reduce_only": false,
+      "side": "sell",
+      "signal_seq": 2,
+      "symbol_id": 2,
+      "tif": "gtc",
+      "ts_event": 1774000000023000000
+    },
+    {
+      "cloid": "0x989e8399d9bf93400000000300000001",
+      "price": "50004.0",
+      "qty": "0.03000000",
+      "reduce_only": false,
+      "side": "buy",
+      "signal_seq": 3,
+      "symbol_id": 1,
+      "tif": "gtc",
+      "ts_event": 1774000000037000000
+    },
+    {
+      "cloid": "0x989e8399dae17e000000000500000001",
+      "price": "49757.9600",
+      "qty": "0.02",
+      "reduce_only": true,
+      "side": "sell",
+      "signal_seq": 5,
+      "symbol_id": 1,
+      "tif": "ioc",
+      "ts_event": 1774000000056000000
+    }
+  ],
+  "schema": "axon.backtest",
+  "schema_version": 3,
+  "signal_source": "synthetic:two-symbol-session signals (make_fixture_log)",
+  "signals": {
+    "accepted": 4,
+    "expired": 1,
+    "no_quote": 0,
+    "planned": 4,
+    "records": 5,
+    "rejected": 1,
+    "superseded": 0
+  },
+  "source": "synthetic:two-symbol-session (make_fixture_log)",
+  "symbols": {
+    "1": {
+      "best_ask": "50010.0",
+      "best_bid": "50008.0",
+      "events": 32,
+      "last_trade_px": "50009.5",
+      "mark_px": "50005.5",
+      "mark_ts": 1774000000039000000,
+      "mid": "50009.0",
+      "open_orders": 0,
+      "position_qty": "0.02",
+      "risk_qty": "0.02"
+    },
+    "2": {
+      "best_ask": "3002.8",
+      "best_bid": "3000.8",
+      "events": 26,
+      "last_trade_px": "3001.9",
+      "mark_px": "3000.2",
+      "mark_ts": 1774000000003000000,
+      "mid": "3001.8",
+      "open_orders": 0,
+      "position_qty": "0",
+      "risk_qty": "0"
+    }
+  },
+  "trace": [
+    {
+      "clock_ns": 1774000000000000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 0,
+      "symbol_id": 1,
+      "ts_event": 1774000000000000000,
+      "values": {
+        "best_ask": "50001.0",
+        "best_bid": "49999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": null,
+        "mark_px": "50000.0",
+        "mark_ts": 1774000000000000000,
+        "mid": "50000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 0,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000001000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 1,
+      "symbol_id": 1,
+      "ts_event": 1774000000001000000,
+      "values": {
+        "best_ask": "50001.0",
+        "best_bid": "49999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": null,
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 0,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000002000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 2,
+      "symbol_id": 2,
+      "ts_event": 1774000000002000000,
+      "values": {
+        "best_ask": "3001.0",
+        "best_bid": "2999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": null,
+        "mark_px": "3000.0",
+        "mark_ts": 1774000000002000000,
+        "mid": "3000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 0,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000003000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 3,
+      "symbol_id": 2,
+      "ts_event": 1774000000003000000,
+      "values": {
+        "best_ask": "3001.0",
+        "best_bid": "2999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": null,
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 0,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000010000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 4,
+      "symbol_id": 1,
+      "ts_event": 1774000000010000000,
+      "values": {
+        "best_ask": "50001.0",
+        "best_bid": "49999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": null,
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 0,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000011000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 5,
+      "symbol_id": 1,
+      "ts_event": 1774000000011000000,
+      "values": {
+        "best_ask": "50001.0",
+        "best_bid": "49999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50000.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 0,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000012000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": "Buy 0.03000000 @49999.0 PostOnly 0x989e8399d8421b000000000100000001"
+      },
+      "kind": "market",
+      "seq": 6,
+      "symbol_id": 2,
+      "ts_event": 1774000000012000000,
+      "values": {
+        "best_ask": "3001.0",
+        "best_bid": "2999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": null,
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 1,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 1,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000013000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 7,
+      "symbol_id": 2,
+      "ts_event": 1774000000013000000,
+      "values": {
+        "best_ask": "3001.0",
+        "best_bid": "2999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.1",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 1,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000014000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 8,
+      "symbol_id": 1,
+      "ts_event": 1774000000014000000,
+      "values": {
+        "best_ask": "50001.0",
+        "best_bid": "49999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50000.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 1,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000014000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 9,
+      "symbol_id": 2,
+      "ts_event": 1774000000014000000,
+      "values": {
+        "best_ask": "3001.0",
+        "best_bid": "2999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.1",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 1,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000015000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 10,
+      "symbol_id": 1,
+      "ts_event": 1774000000015000000,
+      "values": {
+        "best_ask": "50001.0",
+        "best_bid": "49999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50000.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 1,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000016000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 11,
+      "symbol_id": 1,
+      "ts_event": 1774000000016000000,
+      "values": {
+        "best_ask": "50001.0",
+        "best_bid": "49999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50001.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 1,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000017000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 12,
+      "symbol_id": 2,
+      "ts_event": 1774000000017000000,
+      "values": {
+        "best_ask": "3001.0",
+        "best_bid": "2999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.1",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 1,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000018000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 13,
+      "symbol_id": 2,
+      "ts_event": 1774000000018000000,
+      "values": {
+        "best_ask": "3001.0",
+        "best_bid": "2999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.3",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 1,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000020000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 14,
+      "symbol_id": 1,
+      "ts_event": 1774000000020000000,
+      "values": {
+        "best_ask": "50001.0",
+        "best_bid": "49999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50001.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 1,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000021000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 15,
+      "symbol_id": 1,
+      "ts_event": 1774000000021000000,
+      "values": {
+        "best_ask": "50001.0",
+        "best_bid": "49999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50002.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 1,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000022000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 16,
+      "symbol_id": 2,
+      "ts_event": 1774000000022000000,
+      "values": {
+        "best_ask": "3001.0",
+        "best_bid": "2999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.3",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 1,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000023000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": "Sell 0.50000000 @2999.4 Gtc 0x989e8399d8e9f3c00000000200000002"
+      },
+      "kind": "market",
+      "seq": 17,
+      "symbol_id": 2,
+      "ts_event": 1774000000023000000,
+      "values": {
+        "best_ask": "3001.0",
+        "best_bid": "2999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.5",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 1,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000025000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 18,
+      "symbol_id": 1,
+      "ts_event": 1774000000025000000,
+      "values": {
+        "best_ask": "50001.0",
+        "best_bid": "49999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50002.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000026000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 19,
+      "symbol_id": 1,
+      "ts_event": 1774000000026000000,
+      "values": {
+        "best_ask": "50001.0",
+        "best_bid": "49999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50003.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000027000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 20,
+      "symbol_id": 2,
+      "ts_event": 1774000000027000000,
+      "values": {
+        "best_ask": "3001.0",
+        "best_bid": "2999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.5",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000028000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 21,
+      "symbol_id": 2,
+      "ts_event": 1774000000028000000,
+      "values": {
+        "best_ask": "3001.0",
+        "best_bid": "2999.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.7",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000029000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 22,
+      "symbol_id": 1,
+      "ts_event": 1774000000029000000,
+      "values": {
+        "best_ask": "50004.0",
+        "best_bid": "50002.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50003.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50003.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000029000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 23,
+      "symbol_id": 2,
+      "ts_event": 1774000000029000000,
+      "values": {
+        "best_ask": "3001.6",
+        "best_bid": "2999.6",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.7",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.6",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000030000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 24,
+      "symbol_id": 1,
+      "ts_event": 1774000000030000000,
+      "values": {
+        "best_ask": "50004.0",
+        "best_bid": "50002.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50003.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50003.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000031000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 25,
+      "symbol_id": 1,
+      "ts_event": 1774000000031000000,
+      "values": {
+        "best_ask": "50004.0",
+        "best_bid": "50002.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50004.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50003.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000032000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 26,
+      "symbol_id": 2,
+      "ts_event": 1774000000032000000,
+      "values": {
+        "best_ask": "3001.6",
+        "best_bid": "2999.6",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.7",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.6",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000032000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 27,
+      "symbol_id": 1,
+      "ts_event": 1774000000032000000,
+      "values": {
+        "best_ask": "50004.0",
+        "best_bid": "50002.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50004.2",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50003.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000033000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 28,
+      "symbol_id": 2,
+      "ts_event": 1774000000033000000,
+      "values": {
+        "best_ask": "3001.6",
+        "best_bid": "2999.6",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.9",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.6",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000034000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "exec",
+      "seq": 29,
+      "symbol_id": 1,
+      "ts_event": 1774000000034000000,
+      "values": {
+        "best_ask": "50004.0",
+        "best_bid": "50002.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50004.2",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50003.0",
+        "open_orders": 1,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0.05",
+        "risk_qty": "0.05",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000035000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "0x0000000000000000000000000000002a filled=0.02",
+        "plan": ""
+      },
+      "kind": "exec",
+      "seq": 30,
+      "symbol_id": 1,
+      "ts_event": 1774000000035000000,
+      "values": {
+        "best_ask": "50004.0",
+        "best_bid": "50002.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50004.2",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50003.0",
+        "open_orders": 1,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0.03",
+        "risk_qty": "0.05",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000035000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 31,
+      "symbol_id": 1,
+      "ts_event": 1774000000035000000,
+      "values": {
+        "best_ask": "50004.0",
+        "best_bid": "50002.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50004.2",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50003.0",
+        "open_orders": 1,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0.03",
+        "risk_qty": "0.05",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000036000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 32,
+      "symbol_id": 1,
+      "ts_event": 1774000000036000000,
+      "values": {
+        "best_ask": "50004.0",
+        "best_bid": "50002.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50005.5",
+        "mark_px": "50000.5",
+        "mark_ts": 1774000000001000000,
+        "mid": "50003.0",
+        "open_orders": 1,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0.03",
+        "risk_qty": "0.05",
+        "signals_accepted": 2,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000037000000,
+      "decisions": {
+        "cancel": "oid:56968034936",
+        "fill": "",
+        "plan": "Buy 0.03000000 @50004.0 Gtc 0x989e8399d9bf93400000000300000001"
+      },
+      "kind": "market",
+      "seq": 33,
+      "symbol_id": 2,
+      "ts_event": 1774000000037000000,
+      "values": {
+        "best_ask": "3001.6",
+        "best_bid": "2999.6",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3000.9",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.6",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 1,
+        "planned_orders": 1,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000038000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 34,
+      "symbol_id": 2,
+      "ts_event": 1774000000038000000,
+      "values": {
+        "best_ask": "3001.6",
+        "best_bid": "2999.6",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3001.1",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.6",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000039000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 35,
+      "symbol_id": 1,
+      "ts_event": 1774000000039000000,
+      "values": {
+        "best_ask": "50004.0",
+        "best_bid": "50002.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50005.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50003.0",
+        "open_orders": 1,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0.03",
+        "risk_qty": "0.05",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000040000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 36,
+      "symbol_id": 1,
+      "ts_event": 1774000000040000000,
+      "values": {
+        "best_ask": "50004.0",
+        "best_bid": "50002.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50005.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50003.0",
+        "open_orders": 1,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0.03",
+        "risk_qty": "0.05",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000041000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 37,
+      "symbol_id": 1,
+      "ts_event": 1774000000041000000,
+      "values": {
+        "best_ask": "50004.0",
+        "best_bid": "50002.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50006.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50003.0",
+        "open_orders": 1,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0.03",
+        "risk_qty": "0.05",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000042000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 38,
+      "symbol_id": 2,
+      "ts_event": 1774000000042000000,
+      "values": {
+        "best_ask": "3001.6",
+        "best_bid": "2999.6",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3001.1",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.6",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000043000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 39,
+      "symbol_id": 2,
+      "ts_event": 1774000000043000000,
+      "values": {
+        "best_ask": "3001.6",
+        "best_bid": "2999.6",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3001.3",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3000.6",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000044000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 40,
+      "symbol_id": 1,
+      "ts_event": 1774000000044000000,
+      "values": {
+        "best_ask": "50007.0",
+        "best_bid": "50005.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50006.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50006.0",
+        "open_orders": 1,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0.03",
+        "risk_qty": "0.05",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000044000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 41,
+      "symbol_id": 2,
+      "ts_event": 1774000000044000000,
+      "values": {
+        "best_ask": "3002.2",
+        "best_bid": "3000.2",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3001.3",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3001.2",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000045000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 42,
+      "symbol_id": 1,
+      "ts_event": 1774000000045000000,
+      "values": {
+        "best_ask": "50007.0",
+        "best_bid": "50005.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50006.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50006.0",
+        "open_orders": 1,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0.03",
+        "risk_qty": "0.05",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000046000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 43,
+      "symbol_id": 1,
+      "ts_event": 1774000000046000000,
+      "values": {
+        "best_ask": "50007.0",
+        "best_bid": "50005.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50007.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50006.0",
+        "open_orders": 1,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0.03",
+        "risk_qty": "0.05",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000047000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 44,
+      "symbol_id": 2,
+      "ts_event": 1774000000047000000,
+      "values": {
+        "best_ask": "3002.2",
+        "best_bid": "3000.2",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3001.3",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3001.2",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000048000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 45,
+      "symbol_id": 2,
+      "ts_event": 1774000000048000000,
+      "values": {
+        "best_ask": "3002.2",
+        "best_bid": "3000.2",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3001.5",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3001.2",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000049000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "exec",
+      "seq": 46,
+      "symbol_id": 1,
+      "ts_event": 1774000000049000000,
+      "values": {
+        "best_ask": "50007.0",
+        "best_bid": "50005.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50007.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50006.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0",
+        "risk_qty": "0.02",
+        "signals_accepted": 3,
+        "signals_rejected": 0
+      }
+    },
+    {
+      "clock_ns": 1774000000050000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 47,
+      "symbol_id": 1,
+      "ts_event": 1774000000050000000,
+      "values": {
+        "best_ask": "50007.0",
+        "best_bid": "50005.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50007.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50006.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0",
+        "risk_qty": "0.02",
+        "signals_accepted": 3,
+        "signals_rejected": 1
+      }
+    },
+    {
+      "clock_ns": 1774000000051000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 48,
+      "symbol_id": 1,
+      "ts_event": 1774000000051000000,
+      "values": {
+        "best_ask": "50007.0",
+        "best_bid": "50005.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50008.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50006.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0",
+        "risk_qty": "0.02",
+        "signals_accepted": 3,
+        "signals_rejected": 1
+      }
+    },
+    {
+      "clock_ns": 1774000000052000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 49,
+      "symbol_id": 2,
+      "ts_event": 1774000000052000000,
+      "values": {
+        "best_ask": "3002.2",
+        "best_bid": "3000.2",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3001.5",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3001.2",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 3,
+        "signals_rejected": 1
+      }
+    },
+    {
+      "clock_ns": 1774000000053000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 50,
+      "symbol_id": 2,
+      "ts_event": 1774000000053000000,
+      "values": {
+        "best_ask": "3002.2",
+        "best_bid": "3000.2",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3001.7",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3001.2",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 3,
+        "signals_rejected": 1
+      }
+    },
+    {
+      "clock_ns": 1774000000055000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 51,
+      "symbol_id": 1,
+      "ts_event": 1774000000055000000,
+      "values": {
+        "best_ask": "50007.0",
+        "best_bid": "50005.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50008.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50006.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0",
+        "risk_qty": "0.02",
+        "signals_accepted": 3,
+        "signals_rejected": 1
+      }
+    },
+    {
+      "clock_ns": 1774000000056000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": "Sell 0.02 @49757.9600 Ioc reduce-only 0x989e8399dae17e000000000500000001"
+      },
+      "kind": "market",
+      "seq": 52,
+      "symbol_id": 1,
+      "ts_event": 1774000000056000000,
+      "values": {
+        "best_ask": "50007.0",
+        "best_bid": "50005.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50009.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50006.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 1,
+        "position_qty": "0.02",
+        "resting_qty": "0",
+        "risk_qty": "0.02",
+        "signals_accepted": 4,
+        "signals_rejected": 1
+      }
+    },
+    {
+      "clock_ns": 1774000000057000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 53,
+      "symbol_id": 2,
+      "ts_event": 1774000000057000000,
+      "values": {
+        "best_ask": "3002.2",
+        "best_bid": "3000.2",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3001.7",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3001.2",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 4,
+        "signals_rejected": 1
+      }
+    },
+    {
+      "clock_ns": 1774000000058000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 54,
+      "symbol_id": 2,
+      "ts_event": 1774000000058000000,
+      "values": {
+        "best_ask": "3002.2",
+        "best_bid": "3000.2",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3001.9",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3001.2",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 4,
+        "signals_rejected": 1
+      }
+    },
+    {
+      "clock_ns": 1774000000059000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 55,
+      "symbol_id": 1,
+      "ts_event": 1774000000059000000,
+      "values": {
+        "best_ask": "50010.0",
+        "best_bid": "50008.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50009.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50009.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0",
+        "risk_qty": "0.02",
+        "signals_accepted": 4,
+        "signals_rejected": 1
+      }
+    },
+    {
+      "clock_ns": 1774000000059000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 56,
+      "symbol_id": 2,
+      "ts_event": 1774000000059000000,
+      "values": {
+        "best_ask": "3002.8",
+        "best_bid": "3000.8",
+        "dropped_exec_events": 0,
+        "last_trade_px": "3001.9",
+        "mark_px": "3000.2",
+        "mark_ts": 1774000000003000000,
+        "mid": "3001.8",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0",
+        "resting_qty": "0",
+        "risk_qty": "0",
+        "signals_accepted": 4,
+        "signals_rejected": 1
+      }
+    },
+    {
+      "clock_ns": 1774000000060000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "market",
+      "seq": 57,
+      "symbol_id": 1,
+      "ts_event": 1774000000060000000,
+      "values": {
+        "best_ask": "50010.0",
+        "best_bid": "50008.0",
+        "dropped_exec_events": 0,
+        "last_trade_px": "50009.5",
+        "mark_px": "50005.5",
+        "mark_ts": 1774000000039000000,
+        "mid": "50009.0",
+        "open_orders": 0,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": "0.02",
+        "resting_qty": "0",
+        "risk_qty": "0.02",
+        "signals_accepted": 4,
+        "signals_rejected": 1
+      }
+    },
+    {
+      "clock_ns": 1774000000061000000,
+      "decisions": {
+        "cancel": "",
+        "fill": "",
+        "plan": ""
+      },
+      "kind": "exec",
+      "seq": 58,
+      "symbol_id": null,
+      "ts_event": 1774000000061000000,
+      "values": {
+        "best_ask": null,
+        "best_bid": null,
+        "dropped_exec_events": 0,
+        "last_trade_px": null,
+        "mark_px": null,
+        "mark_ts": null,
+        "mid": null,
+        "open_orders": null,
+        "orphan_fills": 0,
+        "planned_cancels": 0,
+        "planned_orders": 0,
+        "position_qty": null,
+        "resting_qty": null,
+        "risk_qty": null,
+        "signals_accepted": 4,
+        "signals_rejected": 1
+      }
+    }
+  ]
+}

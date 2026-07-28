@@ -1,0 +1,203 @@
+# M8 soak — a long session that **trades**, through induced outages, holding a position.
+#
+# The longest session that has ever traded in this project is **59 minutes**, and it was
+# cut off by a real venue outage that exercised every safety mechanism at once. The 1 h 44 m
+# soak that exists was `intent.enabled = false`: read-only market data, no order flow, no
+# position to lose. So the largest untested thing in the system is the composition of the
+# two — a session that is holding real exposure while its market-data socket is being cut,
+# for hours, unattended.
+#
+# This config is that session. Every difference from `soak-testnet.toml` is named below,
+# and the two most important ones are the ones that make it *safe* to leave running.
+#
+# ── what makes this different from the read-only soak ─────────────────────────────
+#
+# **`intent.enabled = true`.** That is the whole point and it is also the whole risk: a
+# session that can place an order can leave one resting after hours unattended, which is
+# exactly what `soak-testnet.toml`'s header says it refuses to do. Four things stand
+# between that and an abandoned position, and they are the reason this file can exist at
+# all:
+#
+#   1. The **dead-man's switch** (60 s lead, re-armed every 20 s). Venue-side, so it
+#      survives this process dying — the only protection that does.
+#   2. The **loss bounds** below (ADR-0037). New exposure stops if the session loses more
+#      than its operator declared; reducing orders keep going out, so the exit stays open.
+#      This is the mechanism the 59-minute run did not have.
+#   3. The **sweeper** (`max_order_age_ms`), which pulls a quote no signal spoke for, and
+#      its **bounded re-quote** (ADR-0036 §5), which puts one back at most three times and
+#      then says `UNQUOTED TARGET` rather than hammering a venue.
+#   4. `./run.sh flatten` as the exit, whatever state the run ends in. See
+#      `docs/adr/0037-a-loss-that-halts-an-exit-that-works-and-the-bars-own-clock.md`.
+#
+# **One coin, not three.** The read-only soak uses three because its target failure is a
+# *partial* resubscribe and one instrument cannot show a subscription set coming back
+# unevenly. This soak's target failure is different — an outage landing on a session that
+# holds a position — and three coins would triple the notional at risk to answer a
+# question one answers. `LiveRunner` is single-instrument by design anyway.
+#
+# **Candles are ON, and the read-only soak's reason for excluding them does not apply
+# here.** That header warns that a *forming* candle carries `ts_event = open_time +
+# interval` and drags `CoreHandler::last_ts` a whole interval into the future. That is
+# real and it is why a read-only soak hunting clock findings excludes them. Here a bar
+# feed is not optional: the strategy is bar-driven, so a soak without candles is a soak of
+# a session that can never have an opinion. What it costs is that clock-skew findings in
+# this run are ambiguous — stated here rather than discovered in the analysis.
+#
+# ── the size, and why it is the smallest thing that trades ────────────────────────
+#
+# `max_position = 0.0003` BTC on the producer — about **$19.5**, above the venue's $10
+# minimum and far below the Phase-6 brief's $50 ceiling. A soak is a test of *duration*,
+# not of size: every extra dollar buys nothing this run is measuring and is a dollar left
+# unattended for hours. The `[strategy.risk]` caps below are the runtime's ceilings on top
+# of that, and they only refuse — nothing there makes an order smaller.
+environment = "sandbox"
+
+[venue]
+name = "hyperliquid"
+network = "testnet"
+account = "0x0000000000000000000000000000000000000000"  # fill in: the account AXON_HL_SECRET_KEY trades for
+# The loopback relay, which is how the outages are induced. `info_url` and `exchange_url`
+# are left unset so they resolve to the real testnet endpoints: reconciliation, the safety
+# loop and **every order** must keep talking to the venue *through* an outage that only
+# severs market data. That interleaving is the whole subject — a session that cannot see
+# the book but can still place orders is the dangerous state, and it is the state this
+# induces on purpose.
+ws_url = "ws://127.0.0.1:8765/ws"
+
+[session]
+bus_capacity = 4096
+core_poll_us = 500
+# 15 s. Over eight hours that is ~1 900 status lines, which is the continuous record the
+# analysis reads — and it is also the cadence the **loss switch** is judged on, because the
+# money view is what it judges and this is when the money view is assembled.
+status_interval_ms = 15000
+mark_max_age_ms = 10000
+feeds = [
+    "Bbo",
+    "L2Book",
+    "Ticker",
+    { Candles = "m1" },
+]
+
+[safety]
+dead_mans_switch = true
+lead_ms = 60000
+rearm_interval_ms = 20000
+
+[reconcile]
+interval_ms = 15000
+grace_ms = 5000
+rate_limit_every = 10
+
+[governor]
+place_reserve_credits = 1000
+place_reserve_ip_weight = 200
+initial_address_cap = 10000
+
+[ipc]
+signal_ring_path = "/dev/shm/m8-soak-signal.ring"
+capacity = 1024
+
+[intent]
+# **The line that makes this a trading soak.** `soak-testnet.toml` sets this false and
+# says so in its header; changing it is the entire delta and it is why every safety bound
+# above is non-negotiable in this file.
+enabled = true
+drain_interval_ms = 1
+max_per_drain = 32
+# 60 s, matching the zoo's own ttl. The shipped 2 000 ms ceiling refuses every signal a
+# bar strategy emits, and the symptom is a session that trades nothing — which over eight
+# hours reads exactly like a healthy quiet market.
+max_signal_age_ms = 60000
+queue_capacity = 64
+submit_poll_ms = 2
+attach_retry_ms = 1000
+taker_slippage_bps = 50
+# The venue's $10 minimum as a quantity. It no longer refuses a **close** (ADR-0037 §3),
+# which matters more here than on a short run: eight hours of partial fills is eight hours
+# of chances to strand a residue, and the 59-minute run stranded two.
+min_order_qty = "0.00016"
+noop_band_bps = 0
+max_order_age_ms = 60000
+sweep_interval_ms = 1000
+max_requotes = 3
+
+[md_ring]
+# **On**, because the producer reads its bars from here. The read-only soak has this off;
+# a trading soak with it off is a soak of a session with no strategy attached.
+enabled = true
+path = "/dev/shm/m8-soak-md.ring"
+capacity = 4096
+policy = "on_change"
+
+[capture]
+enabled = true
+path = "data/captures/m8-soak-trading.jsonl"
+signals = true
+queue_capacity = 16384
+# **Unbounded, deliberately.** ADR-0027's streaming log is what makes that safe over
+# hours, and a cap reached mid-soak turns the artifact into a prefix — which replays green
+# over a session that ended early, the worst thing this harness can produce.
+max_bytes = 0
+
+# ── the money view (warnings; ADR-0036) ──────────────────────────────────────────
+[pnl]
+# Tighter than the live run's 0.50, because eight hours of maker round trips costs more
+# than one hour of them and the point of the *warning* is to be read before the gate
+# fires. Both alarms here are magnitudes in USDC and neither can halt.
+max_session_loss = "0.75"
+# Looser than the live run's 0.25, and for a reason specific to duration: our accounting
+# cannot see funding, a perp pays it every hour, and eight hours of funding on $19.5 is
+# real. A drift alarm sized for one hour would fire on hour three of a perfectly healthy
+# soak — which is how an alarm gets ignored.
+equity_drift_alarm = "0.60"
+
+# ── the latency budgets (ADR-0036, ADR-0037 §4) ──────────────────────────────────
+[latency]
+# The bar's own close to the strategy's decision. One m1 bar, argued in ADR-0037 — and
+# this is the run that gives it more than one session's evidence, which is the whole
+# reason the stage exists.
+cause_to_decision_ms = 60000
+signal_age_ms = 20000
+# Deliberately unchanged from the live run even though this session's socket is being cut
+# on purpose. The ceiling is a statement about the *venue's* round trip and the outages
+# here sever market data, not `/exchange` — so a breach in this stage during a soak is a
+# finding about the venue or the network and not about the harness.
+submit_ack_ms = 1000
+decision_to_ack_ms = 25000
+breach_warn_pct = 25
+
+[strategy]
+name = "m8-soak-trading"
+version = 1
+symbols = [
+    "BTC-PERP",
+]
+
+[strategy.model_ref]
+registry_id = "zoo_xgboost"
+version = 1
+
+# The runtime's ceilings, and the two loss bounds that make an unattended trading soak
+# defensible (ADR-0037 §1).
+#
+#   max_position   0.0008 BTC ~ $52  — the most the tracker may project, counting resting
+#                  orders as if they all fill. A long->short flip projects 0.0006.
+#   max_order_qty  0.0007 BTC ~ $46  — one order, above the 0.0006 flip.
+#   max_notional   50               — checked as qty x **mark**, so it keeps holding if
+#                  BTC moves and the quantity caps stop being worth what they are today.
+#
+#   max_session_loss 1.50 — half again the live run's bound, because this session runs
+#                  eight times as long and pays eight times the fees for it. A bound that
+#                  fired on accumulated *costs* rather than on a loss would end every soak
+#                  early and teach nothing.
+#   max_daily_loss   3.00 — the venue's own equity, against a baseline that survives a
+#                  restart. Twice the session bound, so a soak that is restarted once
+#                  after a crash cannot spend the day's allowance twice.
+[strategy.risk]
+max_position = "0.0008"
+max_notional = "50"
+max_order_qty = "0.0007"
+max_session_loss = "1.50"
+max_daily_loss = "3.00"
+daily_state_path = "data/soak/day-loss-testnet.json"

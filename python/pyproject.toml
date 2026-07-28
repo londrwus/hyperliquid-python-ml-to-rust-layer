@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "axon"
+version = "0.0.1"
+description = "Axon research plane: the Python side of the strategy/feature/signal contract that runs through the Rust execution core."
+readme = "README.md"
+# tomllib is stdlib from 3.11; upper bound keeps us off bleeding-edge Pythons the
+# ML stack (torch/onnx/xgboost/lightgbm) tends to lag. Dev/prod standardize on 3.12.
+requires-python = ">=3.11,<3.14"
+license = "MIT OR Apache-2.0"
+dependencies = [
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+]
+# Model export + the parity gates (ADR-0003/0005: FP32, no quantization). Heavy and
+# platform-sensitive, so they stay OUT of the base install: every test that needs one
+# of these must `pytest.importorskip` it, and the default gate must pass without them.
+ml = [
+    "onnx>=1.16",
+    "onnxruntime>=1.18",
+    "skl2onnx>=1.16",
+    "scikit-learn>=1.4",
+    "xgboost>=2.0",
+    "lightgbm>=4.3",
+]
+# Offloading training / sweeps / walk-forward backtests to Modal through the sibling
+# `hwsched` CLI. The integration shells out to `python -m hwsched ... --json`, so
+# nothing is imported here; `pyyaml` is only for emitting the JobSpec.
+compute = [
+    "pyyaml>=6",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["axon"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

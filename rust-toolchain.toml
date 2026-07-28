@@ -1,0 +1,5 @@
+# Pin a single toolchain so Windows dev and Linux/WSL2 prod build identically.
+# (docs/07-parity-and-testing.md: "same code" must not mean "different numbers".)
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]

@@ -1,0 +1,196 @@
+# Q5 — the Rust half of a **live parity monitor** run: a testnet feed publishing m1
+# bars onto the market-data bar ring and beating the beacon beside it, and nothing else.
+#
+# Copied from `scripts/sessions/shadow-testnet-m1.toml` rather than edited into it, so
+# that file stays the record of what the Phase-5 shadow run did. Five things differ and
+# each is named below. Start it with `scripts/sessions/parity-live.sh --live`, which
+# also starts the Python monitor and shuts both down in the right order.
+#
+# ── this session sends NOTHING signed, and that is the whole safety argument ─────
+# `intent.enabled = false` and `safety.dead_mans_switch = false`, exactly as the shadow
+# config had them and for the same two reasons. A session that cannot place an order
+# cannot leave one resting, so there is nothing for the switch to protect; and an arm is
+# a signed `scheduleCancel`, which is the only metered `/exchange` action this session
+# could otherwise emit — `/info` reads are free. Config validation refuses
+# `dead_mans_switch = false` only when `intent.enabled = true`, which is the pairing
+# that matters, and this file is on the safe side of it.
+#
+# What that buys is worth stating plainly: a parity monitor observes the *feature* path.
+# It compares what the Python serving path computed against a recompute over the same
+# bars. Nothing in that question needs an order, and adding orders to answer it would
+# put money at risk to measure arithmetic.
+#
+# ── m1, because a monitor that cannot be watched is not a monitor ───────────────
+# `perp_bar`'s longest window is 24 bars, so the serving path has no opinion until the
+# 25th *closed* bar: 25 minutes on m1 and 25 hours on h1. The Python side is driven with
+# `--interval 1m` — note the two spellings, `m1` here and `1m` there
+# (`axon.strategies.data.INTERVAL_MS`); they are the same minute and nothing converts
+# between them, so both have to be written correctly.
+#
+# ── and the one line this file exists for: the beacon ───────────────────────────
+# `[md_ring] enabled = true` creates THREE files from one switch and derives all three
+# paths from this one: the slice ring at `path`, the bar ring at `.bars.ring`
+# (ADR-0028 §5) and the beacon at `.beacon` (ADR-0034). The beacon is what turns
+# `Level.SILENT` from a deadline into a diagnosis — `STARVED` when the pass loop is
+# beating and nothing is reaching it, `PUBLISHING` when the ring is moving and whatever
+# compared nothing is downstream of it. Without it a quiet publisher and a dead one
+# write the same nothing, because `policy = "on_change"` means a slice is written only
+# when the state it carries actually moved.
+#
+# **The beacon reaches the file only if the runtime's pass loop beats it.** That wiring
+# is workstream Q1 (`crates/axon-runtime/src/{core,mdring}.rs`); if this session's
+# banner does not print a `beacon at …` path, the harness will say — in a box — that
+# every silence in the run is uncategorised, and the run is still worth doing. It just
+# cannot answer the second question.
+environment = "sandbox"
+
+[venue]
+name = "hyperliquid"
+network = "testnet"
+account = "0x0000000000000000000000000000000000000000"  # fill in: the account AXON_HL_SECRET_KEY trades for
+# `ws_url`, `info_url` and `exchange_url` left unset so they resolve to the real testnet
+# endpoints. A non-canonical `ws_url` silently disables the funding-cadence probe
+# (`HyperliquidMarketData::info_url()` returns `None`), which is a second reason this
+# must never be pointed at the soak's loopback relay: the claim this run exists to
+# support is that bars crossed a venue socket.
+
+[session]
+bus_capacity = 4096
+core_poll_us = 500
+# Every 15 s. The status line is the only continuous record of the Rust half, and it is
+# what a `SILENT` verdict on the Python side gets read against afterwards — so it wants
+# to be finer than the monitor's own window, which is 16 bars.
+status_interval_ms = 15000
+mark_max_age_ms = 10000
+# The inline table is load-bearing: `Feed::Candles` carries an interval, so a bare
+# "Candles" is a TOML parse error at startup rather than a default. `Bbo`/`L2Book`/
+# `Ticker` are kept even though the monitor reads only bars: they are what makes the
+# *slice* ring move, and the beacon's `published` counter — the harness's inter-record
+# gap series — counts slices. With candles alone the beacon would report a `QUIET`
+# publisher for the fifty-nine seconds of every minute in which no bar closed, which is
+# true and useless.
+feeds = [
+    "Bbo",
+    "L2Book",
+    "Ticker",
+    { Candles = "m1" },
+]
+
+[safety]
+# Off. See the header: nothing here can place an order, so there is no order for the
+# switch to protect and an arm would spend a metered request to move a deadline nobody
+# can reach. The lead and re-arm figures are kept at the soak's values so that turning
+# it back on stays a one-word edit and not also two numbers somebody has to choose.
+dead_mans_switch = false
+lead_ms = 60000
+rearm_interval_ms = 20000
+
+[reconcile]
+# Once a minute. `/info` is free, so the cadence costs nothing but CPU; on a read-only
+# session it is confirming that this account is still flat rather than tracking a
+# position, and that is worth confirming precisely because nothing here would notice.
+interval_ms = 60000
+grace_ms = 5000
+rate_limit_every = 10
+
+[governor]
+place_reserve_credits = 1000
+place_reserve_ip_weight = 200
+initial_address_cap = 10000
+
+[ipc]
+# Created and never read: with `intent.enabled = false` no intent source attaches. The
+# monitor's serving path writes its would-be targets onto a ring of its **own**
+# (`--ring` on the Python side), not this one — a would-be target that landed on the
+# runtime's signal ring is one config flip away from being planned into an order.
+signal_ring_path = "/dev/shm/parity-live-signal.ring"
+capacity = 1024
+
+[intent]
+enabled = false
+drain_interval_ms = 1
+max_per_drain = 32
+# 60 s, not the shipped 2 000 ms. Inert here — nothing reads this ring — and written
+# correctly anyway, because this file is the sort that gets copied. A signal's admission
+# window is clamped to `min(ttl_ms, max_signal_age_ms)`, and a closed m1 bar reaches the
+# strategy a median 12.9 s after its own close (82 of 85 breached the 2 000 ms ceiling
+# in the first live run), so the default would refuse every signal a bar strategy emits.
+max_signal_age_ms = 60000
+queue_capacity = 64
+submit_poll_ms = 2
+attach_retry_ms = 1000
+taker_slippage_bps = 50
+min_order_qty = "0"
+noop_band_bps = 0
+max_order_age_ms = 60000
+
+# The point of the session. One switch, three derived paths — slices here, bars at
+# `/dev/shm/parity-live-md.bars.ring`, beacon at `/dev/shm/parity-live-md.ring.beacon`.
+# Derived and not configured, because an operator who could name them independently
+# could enable slices, forget bars, and run a bar-driven monitor that starts cleanly and
+# never has an opinion — which is character for character the transcript of a dead feed.
+[md_ring]
+enabled = true
+path = "/dev/shm/parity-live-md.ring"
+# 4096 × 128 B on tmpfs. Oversized deliberately, and for a reason specific to this run:
+# nothing advances the bar ring's `tail` until a consumer attaches, so the Python side
+# can be started minutes after the session and will replay every bar since startup —
+# which is how a 25-bar warmup gets served out of history instead of costing 25 minutes
+# of the operator's afternoon. At two coins × one bar a minute the bar ring takes ~34
+# hours to wrap, so a monitor that pauses cannot lose a bar to the ring. That matters
+# more here than anywhere else: a ring drop reaches NEITHER side of the diff, so both
+# sides agree perfectly about a window that is one observation short (ADR-0029 §1), and
+# `FeedHealth.ring_dropped` is the only thing in the run that can see it.
+capacity = 4096
+policy = "on_change"
+
+# On, and this run wants it for a reason beyond habit: the capture is the only artefact
+# that outlives the ring. A `SILENT` verdict at 14:32 is answerable afterwards only if
+# something recorded what the core was being handed at 14:32 — the ring is gone when the
+# session is, and /dev/shm keeps no history.
+[capture]
+enabled = true
+path = "data/captures/parity-live-m1.jsonl"
+signals = true
+queue_capacity = 16384
+# 0 = no cap. A cap set where a log stopped being loadable would end this run at the
+# hour the interesting silences start; `EventLog` streams since ADR-0027.
+max_bytes = 0
+
+# Two coins, and here it is load-bearing rather than nice to have. The shadow trader
+# arms its bar deadline on **any** instrument's bar, not only the one it records,
+# because Hyperliquid sends no candle frame at all for a minute in which nothing traded
+# — 8 of 63 minutes in the first live run, every one `n = 0` trades. With one coin, a
+# legitimately empty minute is indistinguishable from a stalled subscription and the
+# monitor answers SILENT to a healthy feed; with two, the other instrument's print is
+# the proof. A single-coin run degenerates to the old behaviour, which is the argument
+# for never doing one here.
+[strategy]
+name = "q5-parity-live-m1"
+version = 1
+symbols = [
+    "BTC-PERP",
+    "ETH-PERP",
+]
+
+# Mandatory in the schema and never read: `StrategyConfig::model_ref` has no `Option`
+# and no `#[serde(default)]`, so a config without it is refused at parse time — but
+# `grep -rn model_ref crates/` returns two hits, both in `config.rs`, and nothing
+# resolves it. This session runs no model at all (the monitor compares feature vectors
+# and never looks at a score), so the entry named here does not exist in any registry
+# and cannot. Written down so the next operator does not go looking for it.
+[strategy.model_ref]
+registry_id = "q5-parity-live"
+version = 1
+
+# The **runtime's** ceilings, which are not a strategy's position size and are routinely
+# confused with it. Nothing here can place an order, so these bound nothing this session
+# does; they are set at the Phase-6 brief's numbers rather than at some larger default
+# so that a copy of this file cannot arrive at a live session carrying a ceiling nobody
+# chose. 0.001 BTC is ~$65 at the price the Phase-6 runs saw — deliberately just above
+# the brief's $50 notional ceiling, so the quantity limit does not sit exactly on the
+# size and reject the order it was meant to allow.
+[strategy.risk]
+max_position = "0.001"
+max_notional = "100"
+max_order_qty = "0.001"

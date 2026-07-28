@@ -1,0 +1,201 @@
+# P6 — **the live one.** A Python strategy driving real orders at Hyperliquid testnet,
+# on m1 bars, at minimum notional, with the dead-man's switch armed.
+#
+# Copied from `scripts/sessions/shadow-testnet-m1.toml` (agent P5) rather than edited
+# into it, because that file is the record of what the shadow run did and this one turns
+# the two switches it deliberately left off. Every line that differs is named below.
+#
+# ── the two switches, and why they are the whole file ───────────────────────────
+# `intent.enabled = true` and `safety.dead_mans_switch = true`. The shadow config set
+# both the other way and said so in its header: a session that cannot place an order
+# cannot leave one resting, and a switch protecting no order is credits spent on a
+# deadline nobody reaches. Here there *are* orders, so both flip together — and config
+# validation refuses `dead_mans_switch = false` with `intent.enabled = true`, correctly,
+# which means the pairing is not something an operator can get half right.
+#
+# ── what actually decides the order size, and what merely bounds it ─────────────
+# The **strategy** decides: `axon.strategies.baseline.BaselineParams.max_position`, at
+# 0.0003 BTC. Testnet BTC read 64 789 at session prep, so that is **$19.44** — above the
+# venue's $10 minimum and below the Phase-6 brief's $50 ceiling. A flip from long to
+# short is twice that, 0.0006 BTC = **$38.87**, still under the ceiling; that doubling is
+# the number a position-size ceiling has to be chosen against and it is the one most
+# easily forgotten.
+#
+# `[strategy.risk]` below only *bounds*. The two are routinely confused, so: nothing here
+# makes an order smaller, it only refuses one that is too large. `PerpBarParams`' 0.01 BTC
+# default — ~$648 at this price, thirteen times the brief's ceiling — is exactly the kind
+# of number that arrives in a live config by being copied, which is why this file names
+# its own.
+#
+# ── the clock hazard this file's numbers exist to avoid ─────────────────────────
+# `max_signal_age_ms = 60000`, **not the shipped 2 000 ms**. A signal's admission window
+# is clamped to `min(ttl_ms, max_signal_age_ms)`, and `BaselineParams.ttl_ms` is 60 000 —
+# one m1 bar, which is exactly as long as a bar strategy's opinion is worth. Against the
+# 2 000 ms default *every* signal is dropped as `Expired` before the planner sees it, and
+# agent P4 measured precisely that. The symptom is a strategy that emits and never
+# trades, which reads exactly like a warmup that has not finished, so it costs an hour to
+# diagnose and nothing raises.
+#
+# The other half of the hazard is on the producer's side and cannot be fixed here: the
+# core's event clock runs 1.4–1.9 s behind wall time on testnet BTC's `bbo`, so a signal
+# stamped with the last *observed* market moment starts life with that lag already spent.
+# `python/axon/strategies/live_runner.py` stamps with the producer's own clock instead,
+# which the reader admits and counts as `ahead_of_clock`. See its module docstring.
+environment = "sandbox"
+
+[venue]
+name = "hyperliquid"
+network = "testnet"
+account = "0x0000000000000000000000000000000000000000"  # fill in: the account AXON_HL_SECRET_KEY trades for
+# `ws_url`, `info_url` and `exchange_url` unset, so they resolve to the real testnet
+# endpoints. Note that a non-canonical `ws_url` silently disables the funding-cadence
+# probe (`HyperliquidMarketData::info_url()` returns `None`), which is a second reason a
+# live run must not be pointed at the soak's loopback relay.
+
+[session]
+bus_capacity = 4096
+core_poll_us = 500
+# Every 15 s. The status line is the only continuous record of a session nobody is
+# watching in a terminal, and an hour of it is ~240 lines — readable afterwards.
+status_interval_ms = 15000
+mark_max_age_ms = 10000
+# The inline table is load-bearing: `Feed::Candles` carries an interval, so a bare
+# "Candles" is a TOML parse error at startup rather than a default.
+feeds = [
+    "Bbo",
+    "L2Book",
+    "Ticker",
+    { Candles = "m1" },
+]
+
+[safety]
+# **Armed**, because this session can leave an order resting and a position open. The
+# soak's numbers, unchanged: a 60 s lead re-armed every 20 s survives two consecutive
+# missed arms before the venue-side switch fires. An arm is a signed `scheduleCancel`
+# and costs one metered `/exchange` request; over an hour that is ~180 of a 10 203
+# budget. An arm is **not** a firing — only a firing spends one of the venue's ten daily
+# triggers.
+dead_mans_switch = true
+lead_ms = 60000
+rearm_interval_ms = 20000
+
+[reconcile]
+# Back to the soak's 15 s from the shadow config's 60 s. This session holds real orders,
+# and reconciliation is the only thing that can notice the tracker and the venue
+# disagreeing about one. `/info` is free, so the cadence costs nothing but CPU.
+interval_ms = 15000
+grace_ms = 5000
+rate_limit_every = 10
+
+[governor]
+place_reserve_credits = 1000
+place_reserve_ip_weight = 200
+initial_address_cap = 10000
+
+[ipc]
+# Created by the **Python** side (`RingProducer` zeroes head and tail on construction),
+# so this path must not already exist when the producer starts. The intent source retries
+# the attach every `intent.attach_retry_ms` until it does — which is what lets the Rust
+# session be started first and accumulate bars while the producer is still being written.
+signal_ring_path = "/dev/shm/p6-live-signal.ring"
+capacity = 1024
+
+[intent]
+enabled = true
+drain_interval_ms = 1
+max_per_drain = 32
+# See the header. 60 s, matching `BaselineParams.ttl_ms`; the shipped 2 000 ms ceiling
+# would refuse every signal this strategy emits.
+max_signal_age_ms = 60000
+queue_capacity = 64
+submit_poll_ms = 2
+attach_retry_ms = 1000
+# Inert: the baseline emits at `URGENCY_POST_ONLY`, which never crosses. Left at the
+# soak's value rather than zeroed, because a zero here would read as a deliberate
+# no-slippage policy for a taker order this session never sends.
+taker_slippage_bps = 50
+# **0.00016 BTC ≈ $10.4** at the 64 789 this session was prepared at, i.e. the venue's own
+# $10 minimum expressed as a quantity. Not zero, which is what every other config in the
+# tree carries: a target this strategy can only ever hold at 0 or ±0.0003 produces deltas
+# of 0.0003 or 0.0006, both comfortably above — but a *partial fill* leaves a residue, and
+# the next delta against that residue can be a few dollars. With `0` that order reaches
+# the venue and comes back `minTradeNtlRejected`, which spends a metered request to learn
+# something the config already knew. Refused locally it lands in `no_order` as a grid
+# refusal, counted apart from "already at target". The cost is real and accepted: a
+# residue smaller than the floor cannot be closed by the strategy and has to be cleaned
+# up by the operator, which this run does explicitly at the end.
+min_order_qty = "0.00016"
+# 0: every target change acts. A no-op band would suppress exactly the small re-quotes
+# that make the cancel/replace path visible, and this run exists to watch that path.
+noop_band_bps = 0
+# The deployed default, and the one agent P1 ran under. The sweeper (ADR-0031) cancels a
+# tracked order older than this on a symbol no signal spoke for. The baseline emits only
+# when its target *changes*, so a held target leaves a quote resting with nothing
+# speaking for it — which makes this session a plausible first firing of a sweeper that
+# has never cancelled anything at a venue. Left at 60 s deliberately: raising it to keep
+# quotes alive longer would suppress the one new observation available here.
+max_order_age_ms = 60000
+sweep_interval_ms = 1000
+
+[md_ring]
+# The bar ring is how the Python strategy sees the market at all. The path is derived,
+# never configured twice — `/dev/shm/p6-live-md.ring` becomes
+# `/dev/shm/p6-live-md.bars.ring` (ADR-0028 §5) — so an operator cannot enable slices,
+# forget bars, and run a bar-driven strategy that starts cleanly and never has an opinion.
+enabled = true
+path = "/dev/shm/p6-live-md.ring"
+# 4096 × 128 B on tmpfs. Oversized on purpose, and here for a second reason the shadow
+# config did not have: nothing advances the ring's `tail` until a consumer attaches, so a
+# session started before its Python producer accumulates every bar since startup and the
+# strategy warms its 21-bar window up from history the instant it attaches. At one bar a
+# minute the ring holds ~68 hours.
+capacity = 4096
+policy = "on_change"
+
+[capture]
+enabled = true
+path = "data/captures/p6-live-m1.jsonl"
+signals = true
+queue_capacity = 16384
+# 0 = no cap. A cap set where a log stopped being loadable would end this run at the hour
+# the orders start; `EventLog` streams since ADR-0027.
+max_bytes = 0
+
+# **One coin.** The shadow run took two so that a parity break on one could be read
+# against the other; this run places orders, and a second instrument would double the
+# notional at risk to answer a question no order flow is needed for.
+[strategy]
+name = "p6-live-m1"
+version = 1
+symbols = [
+    "BTC-PERP",
+]
+
+# Mandatory in the schema and **never read**: `StrategyConfig::model_ref` has no `Option`
+# and no `#[serde(default)]`, so a config without it is refused at parse time — but
+# `grep -rn model_ref crates/` returns two hits, both in `config.rs`, and nothing
+# resolves it. This session runs a statistical rule with no artifact at all, so the entry
+# named here does not exist in any registry and cannot. Measured by agent P4; written
+# down here so the next operator does not go looking for the registry the config appears
+# to require.
+[strategy.model_ref]
+registry_id = "p6-live-baseline-z"
+version = 1
+
+# The **runtime's** ceilings, not the strategy's size — see the header. Three of them,
+# each binding on a different failure:
+#
+#   max_position  0.0008 BTC = $51.8 — the most exposure the tracker may project,
+#                 counting resting orders as if they all fill. A long-to-short flip
+#                 projects 0.0006 at the moment the replacement is placed, so this has to
+#                 clear that and not merely the 0.0003 target.
+#   max_order_qty 0.0007 BTC = $45.4 — one order's size. Above the 0.0006 flip, below the
+#                 brief's $50 at this price.
+#   max_notional  50      — the brief's ceiling itself, checked as qty × **mark**, so it
+#                 keeps holding if BTC moves and the two quantity limits above stop being
+#                 worth what they were worth today. This is the one that must never be
+#                 raised.
+[strategy.risk]
+max_position = "0.0008"
+max_notional = "50"
+max_order_qty = "0.0007"

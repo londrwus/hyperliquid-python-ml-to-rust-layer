@@ -1,0 +1,28 @@
+[package]
+name = "axon-ipc"
+description = "Axon's Python↔Rust shared-memory boundary: a lock-free SPSC ring over a memory-mapped file, laid out per contracts/schema.toml. Portable across Linux (/dev/shm tmpfs) and Windows."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+axon-contracts = { workspace = true }
+# Generic record access (`bytes_of`/`bytes_of_mut`) now that the ring is generic
+# over the contract's Pod records rather than hard-typed to Signal.
+bytemuck = { workspace = true }
+memmap2 = { workspace = true }
+thiserror = { workspace = true }
+
+# Example binaries used by the cross-language round-trip tests
+# (python/tests/test_roundtrip.py and test_md_ring.py run these against the Python
+# ring clients).
+[[example]]
+name = "ipc_writer"
+
+[[example]]
+name = "ipc_reader"
+
+[[example]]
+name = "md_writer"
